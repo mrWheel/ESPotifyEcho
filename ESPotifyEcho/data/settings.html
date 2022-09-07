@@ -1,0 +1,278 @@
+<!DOCTYPE HTML><html>
+<head>
+  <title>ESP Web Server</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/ESPotifyEcho.css">
+<title>ESPotify</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+</head>
+<body>
+<!--  <div class="topnav">  -->
+<!--    <h1>ESPpotify to Echo &#128194; &nbsp;</h1> -->
+<!--  </div> -->
+       <!-- header -->
+    <header class="header">
+      <div class="topnav">
+        <div class="columns" style="font-size: 26pt; font-variant: small-caps; color:gray;">
+             <h1 style="transform: skew(-15deg);">&nbsp; 
+                           <span>ESPotify Echo </span> 
+                           <span class="title big">Settings </span> 
+                           <span style="font-size:70%;"></span></h1>
+        </div>
+        <div class='navRightFS'>
+        <p>
+          <button class="button" id='M_goHome'>&#9166; &nbsp;</button> <!-- 9881; / &#9096 -->
+        </p> 
+        </div>
+      </div>  <!-- header-nav -->
+      <br/>
+    </header>
+
+  <!--<form>-->
+  <div class="content">
+    <div class="card">
+      <h2>System Settings</h2>
+      <p> </p>
+      <p class="label"><label for="wifiSSID">WiFi SSID </label></p>
+      <p class="info"><input type="text" class="input" id="wifiSSID" autocomplete="on" name="wifiSSID"></p>
+      <p class="label"><label for="wifiPassword">WiFi Passord </label></p>
+      <p class="info"><input type="password" class="input" id="wifiPassword" autocomplete="on" name="wifiPassword">
+        <button id="toggleVisibility">&#128065</button>
+      </p>
+      <p class="label"><label for="hostName">hostName </label></p>
+      <p class="info"><input type="text" class="input" id="hostName" autocomplete="on" name="hostName"></p>
+    </div>  <!-- card -->
+    <br>
+    <div class="card">
+      <h3>Spotify credentials</h3>
+      <p> </p>
+      <p class="label"><label for="spotClientId">Client ID </label></p>
+      <p class="info">
+        <textarea wrap="soft" type="text" rows="2" cols="30" class="input" id="spotClientId" name="spotClientId"></textarea>
+      </p>
+      <p class="label"><label for="spotClientSecret">Client Secret </label></p>
+      <p class="info">
+         <textarea wrap="soft" type="text" rows="2" cols="30" class="input" id="spotClientSecret" name="spotClientSecret"></textarea>
+      </p>
+      Get refreshToken :
+      </br>
+        <a href="https://getyourspotifyrefreshtoken.herokuapp.com/"  target="_blank" rel="noopener noreferrer">https://getyourspotifyrefreshtoken.herokuapp.com/</a>
+      </br>
+      </br>
+      <p class="label"><label for="spotRefreshToken">Refresh Token </label></p>
+      <p class="info">
+         <textarea wrap="soft" type="text" rows="5" cols="30" class="input" id="spotRefreshToken" name="spotRefreshToken"></textarea>
+      </p>
+      
+      <hr>
+      <p><button id="reload"  class="button">reload</button>
+         <button id="save"    class="button">save</button>
+         <button id="reStart" class="button">reStart</button>
+      </p>
+    </div>  <!-- card -->
+  </div>  <!-- content -->
+  <!--</form>-->
+<script>
+  var gateway = 'ws://'+location.host+':81/settings';
+  var websocket;
+  window.addEventListener('load', onLoad);
+  
+  var newDevice;
+  
+  //----------------------------------------------------------------------------
+  function initWebSocket() 
+  {
+    console.log('Trying to open a WebSocket connection...');
+    websocket = new WebSocket(gateway);
+    websocket.onopen    = onOpen;
+    websocket.onclose   = onClose;
+    websocket.onmessage = onMessage; // <-- add this line
+  
+  } //  initWebSocket()
+  
+  //----------------------------------------------------------------------------
+  function onOpen(event) 
+  {
+    console.log('Connection opened');
+    reload();
+    //reloadTimer = setInterval(reload, 5000); // Time in milliseconds
+  
+  } //  onOpen()
+  
+  //----------------------------------------------------------------------------
+  function onClose(event) 
+  {
+    console.log('Connection closed');
+    //clearInterval(reloadTimer);
+    setTimeout(initWebSocket, 2000);
+  
+  } //  onClose()
+  
+  //----------------------------------------------------------------------------
+  function onMessage(event) 
+  {
+    var wifiSSID;
+    var wifiPassword;
+    var hostName;
+    var spotCleintId;
+    var spotClientSecret;
+    var spotRefreshToken;
+    console.log("onMessage: --> event.data ["+JSON.stringify(event.data)+"]");
+    const obj = JSON.parse(event.data);
+    document.getElementById('ipAddress').innerHTML = "["+obj["ipAddress"]+"]";
+    wifiSSID = obj.wifiSSID;
+    document.getElementById('wifiSSID').value = wifiSSID;
+    wifiPassword = obj.wifiPassword;
+    document.getElementById('wifiPassword').value = wifiPassword;
+    hostName = obj.hostName;
+    document.getElementById('hostName').value = hostName;
+    spotClientId = obj.spotifyClientId
+    document.getElementById('spotClientId').value = spotClientId;
+    spotClientSecret = obj.spotifyClientSecret
+    document.getElementById('spotClientSecret').value = spotClientSecret;
+    spotRefreshToken = obj.spotifyRefreshToken
+    document.getElementById('spotRefreshToken').value = spotRefreshToken;
+    
+  } //  onMessage()
+  
+  //----------------------------------------------------------------------------
+  function onLoad(event) 
+  {
+    initWebSocket();
+    initButton();
+
+  } //  onLoad()
+  
+  //----------------------------------------------------------------------------
+  function initButton() 
+  {
+    document.getElementById('reload').addEventListener('click', reload);
+    document.getElementById('save').addEventListener('click', save);
+    document.getElementById('reStart').addEventListener('click', reStart);
+
+    document.getElementById('toggleVisibility').addEventListener('click', changeVisability);
+    document.getElementById('M_goHome').addEventListener('click', goHome);
+    
+  } //  initButton()
+  
+  //----------------------------------------------------------------------------
+  function reload()
+  {
+    var jsonSource = {};
+    var jsonData = {};
+    jsonSource["source"] = "settingsGUI";
+    jsonSource["command"] = "reload";
+    //console.log("send("+JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData)+")");
+    websocket.send(JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData));
+    
+  } //  rekoad()
+  
+  //----------------------------------------------------------------------------
+  function reStart()
+  {
+    var jsonSource = {};
+    var jsonData = {};
+    jsonSource["source"] = "settingsGUI";
+    jsonSource["command"] = "reStart";
+    //console.log("send("+JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData)+")");
+    //setTimeout(sendReStart, 2000);
+    sendReStart();
+    //websocket.send(JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData));
+    goHome();
+    
+  } //  reStart()
+  
+  //----------------------------------------------------------------------------
+  function sendReStart()
+  {
+    console.log("sendReStart command!");
+    var jsonSource = {};
+    var jsonData = {};
+    jsonSource["source"] = "settingsGUI";
+    jsonSource["command"] = "reStart";
+    websocket.send(JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData));
+
+  } //  sendRestart()
+  
+  //----------------------------------------------------------------------------
+  function save()
+  {
+    var jsonSource = {};
+    var jsonData = {};
+    jsonSource["source"] = "settingsGUI";
+    jsonSource["command"] = "save";
+    jsonData["new_wifiSSID"] = document.getElementById('wifiSSID').value;
+    jsonData["new_wifiPassword"] = document.getElementById('wifiPassword').value;
+    jsonData["new_hostName"] = document.getElementById('hostName').value;
+    jsonData["new_spotifyClientId"] = document.getElementById('spotClientId').value;
+    jsonData["new_spotifyClientSecret"] = document.getElementById('spotClientSecret').value;
+    jsonData["new_spotifyRefreshToken"] = document.getElementById('spotRefreshToken').value;
+    console.log("send("+JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData)+")");
+    websocket.send(JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData));
+    
+  } //  save()
+  
+  /***
+  //----------------------------------------------------------------------------
+  function populateSelector(elementId, jsonArray)
+  {
+    var select = document.getElementById(elementId);
+
+    //-- clear dropdownlist --
+    document.getElementById(elementId).options.length = 0;
+    
+    for(var i = 0; i < jsonArray.length; i++) 
+    {
+      var device = jsonArray[i];
+      //console.log("["+i+"] name["+device.name+"] select["+device.active+"]");
+      var el = document.createElement("option");
+      el.text = device.name;
+      el.value = device.name;
+      if (device.active)
+      {
+        el.setAttribute("selected",true);
+        newDevice = device.name;
+      }
+      select.add(el);
+    }
+    
+  } //  populateSelector()
+  
+  //----------------------------------------------------------------------------
+  function deviceChange(newValue) 
+  {
+    console.log("device now is ["+newValue+"]");
+    newDevice = newValue;
+    
+  } //  deviceChange()
+  ***/
+  
+  //----------------------------------------------------------------------------
+  function goHome()
+  {
+    console.log("go Home");
+    window.location.replace("/");
+    
+  } //  startSettings()
+  
+  //----------------------------------------------------------------------------
+  function changeVisability()
+  {
+    //console.log("start Back");
+    const type = wifiPassword.getAttribute("type") === "password" ? "text" : "password";
+            wifiPassword.setAttribute("type", type);   
+             
+  } //  changeVisability()
+  
+</script>
+  
+    <!-- Pin to bottom right corner -->
+    <div class="bottom right-0">2021, 2022 &copy; Willem Aandewiel</div>
+
+    <!-- Pin to bottom left corner -->
+    <div id="ipAddress" class="bottom left-0">[ipAddress]</div>
+
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE HTML><html>
+<head>
+  <title>ESPotifyEcho</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/ESPotifyEcho.css">
+  <script src="/playlists.js"></script>
+  
+<title>ESPotify</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<!--  <div class="topnav">  -->
+<!--    <h1>ESPpotify to Echo &#128194; &nbsp;</h1> -->
+<!--  </div> -->
+       <!-- header -->
+    <header class="header">
+      <div class="topnav">
+        <div class="columns" style="font-size: 26pt; font-variant: small-caps; color:gray;">
+             <h1 style="transform: skew(-15deg);">&nbsp; 
+                           <span>ESPotify Echo </span> 
+                           <span class="title big">Playlists </span> 
+                           <span style="font-size:70%;"></span></h1>
+        </div>
+        <div class='navRightFS'>
+        <p>
+          <button class="button" id='M_goHome'>&#9166; &nbsp;</button> <!-- 9881; / &#9096 -->
+        </p>
+        </div>
+      </div>  <!-- header-nav -->
+      <br/>
+    </header>
+
+  <div class="content">
+    <div class="card">
+      <h2>Not Connect Playlists</h2>
+      <p class="label">
+          <label for="notLinkedList">Not Linked </label>
+      </p>
+      <p class="info">
+        <select id="notLinkedList" onChange="notLinkedChanged(this.value)">
+          <option>not linked</option>
+        </select>
+      </p>
+      <p class="label">link to: </p><p class="info" id="newNfcTag" style="display:none;">%RFIDID%</p> 
+      <img id="newNfcTagClock" src="/timerOn.png" alt="turningClock" width="40" height="40" style="display:block;">
+      <p>
+         <button id="readNfcTag" class="button">Read NFCtag</button>
+         <button id="newLink" class="button">Link NFCtag</button>
+      </p>
+      <p> </p>
+      <hr>
+      <h2>Connect Playlists</h2>
+      <p class="label">
+              <label for="linkedList">Linked </label>
+      </p>
+      <p class="info">
+        <select id="linkedList" onChange="linkedChanged(this.value)">
+          <option>linked</option>
+        </select>
+      </p>
+      <p class="label">NFC tag </p>
+          <p class="info" id="nfcTag" style="display:none;">%RFIDID%</p>  
+          <img id="nfcTagClock" src="/timerOn.png" alt="turningClock" width="40" height="40" style="display:block;">
+      <p>
+         <button id="unLink" class="button">unLink</button>
+      </p>
+      <p> </p>
+      <hr>
+      <p>
+         <button id="reload" class="button">Reload</button>
+         <button id="save"   class="button">Save</button>
+      </p>
+    </div>  <!-- card -->
+  </div>    <!-- content -->
+
+  <!-- Pin to bottom right corner -->
+  <div class="bottom right-0">2021, 2022 &copy; Willem Aandewiel</div>
+
+  <!-- Pin to bottom left corner -->
+  <div id="ipAddress" class="bottom left-0">[0.0.0.0]</div>
+
+</body>
+</html>

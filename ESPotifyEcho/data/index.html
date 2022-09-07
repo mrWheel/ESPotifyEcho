@@ -1,0 +1,374 @@
+<!DOCTYPE HTML><html>
+<head>
+  <title>ESP Web Server</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/ESPotifyEcho.css">
+  <title>ESPotify</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+</head>
+<body>
+<!--  <div class="topnav">  -->
+<!--    <h1>ESPpotify to Echo &#128194; &nbsp;</h1> -->
+<!--  </div> -->
+       <!-- header -->
+    <header class="header">
+      <div class="topnav">
+        <div class="columns" style="font-size: 26pt; font-variant: small-caps; color:gray;">
+             <h1 style="transform: skew(-15deg);">&nbsp; 
+                           <span>ESPotify Echo </span> 
+                           <span class="title big">Player </span> 
+                           <!--<span class="title big">Manager</span>&nbsp; -->
+                           <span style="font-size:70%;"></span></h1>
+        </div>
+        <div class='navRightFS'>
+        <p>
+          <button class="button" id='M_FSmanager'>FS manager</button>
+          <button class="button" id='M_Playlists'>Playlists</button> <!--&#128218; -->
+          <button class="button" id='M_Settings'>Settings</button>   <!-- &#9935; -->
+        </p>
+        </div>
+      </div>  <!-- header-nav -->
+      <br/>
+    </header>
+
+  <div class="content">
+    <div class="card">
+      <!--<h2>System Console</h2>-->
+      <!--<p class="label"><span class="info" id="track">%TRACK%</span></p>-->
+      <h2 id="track">%TRACK%</h2>
+      <p class="label">album: </p> <p class="info" id="album">-</p>
+      <p> </p>
+      <p class="label">artist: </p> <p class="info" id="artist">-</p>
+      <p> </p>
+      <p class="label">from: </p><p class="info" id="playlist">-</p>
+      <p> </p>
+      <div style="display: flex; justify-content: space-between;">
+        <p id="progress">sec</p>
+        <div id="myProgress">
+            <div id="myProgressBar"></div>
+            <div id="myBackgroundBar" style="width:100%;"></div>
+        </div>
+        <p id="duration">sec</p>
+      </div>
+      <hr>
+      <p><button id="pause"     class="button">Pause</button>
+         <button id="previous"  class="button">Previous</button>
+         <button id="next"      class="button">Next</button>
+         <button id="play"      class="button">Play</button>
+      </p>
+      <p> </p>
+      <div class="slidecontainer">
+        <p class="label" id="playerVolume">player Volume:</p>
+        <input type="range" min="0" max="100" value="50" step="5" class="slider" id="volume">
+        <!--<p>Volume: <span id="demo"></span>%</p>-->
+     </div>
+
+    </div>  <!-- card -->
+    <!------------------------------------------------------------------------->
+    <br>
+    <div class="card">
+      <h2>Default Player</h2>
+      <p class="label"><label for="devices">Playing On: </label></p>
+      <p class="info">
+        <select id="devices" onChange="deviceChange(this.value)">
+          <option>Choose a device</option>
+        </select>
+      </p>
+      <hr>
+      <p>
+        <button id="shuffle"  class="button">Toggle</button>
+        <button id="saveDevice" class="button">Save</button>
+      </p>
+    </div>  <!-- card -->
+  </div>    <!-- content -->
+<script>
+  //var gateway = 'ws://${window.location.hostname}:81/';
+  var gateway = 'ws://'+location.host+':81/';
+  //var gateway = new WebSocket( 'ws://'+location.host+':81/', ['arduino'] );
+  var websocket;
+  
+  window.addEventListener('load', onLoad);
+  var slider = document.getElementById("volume");
+  
+  //----------------------------------------------------------------------------
+  function initWebSocket() 
+  {
+    console.log('Trying to open a WebSocket connection...');
+    websocket = new WebSocket(gateway);
+    websocket.onopen    = onOpen;
+    websocket.onclose   = onClose;
+    websocket.onmessage = onMessage; // <-- add this line
+  
+  } //  initWebSocket()
+  
+  //----------------------------------------------------------------------------
+  function onOpen(event) 
+  {
+    console.log('Connection opened');
+    reload();
+    playingInfoTimer = setInterval(playingInfo, 10000); // Time in milliseconds
+  
+  } //  onOpen()
+  
+  //----------------------------------------------------------------------------
+  function onClose(event) 
+  {
+    console.log('Connection closed');
+    clearInterval(playingInfoTimer);
+    setTimeout(initWebSocket, 2000);
+  
+  } //  onClose()
+  
+  //----------------------------------------------------------------------------
+  function onMessage(event) 
+  {
+    const obj = JSON.parse(event.data);
+    console.log("send("+JSON.stringify(obj)+")");
+
+    if (obj.type == "playingInfo")
+    {
+      var Shuffle = obj.shuffle;
+      var Playlist = obj.playlist;
+      var Album = obj.album;
+      var Artist = obj.artist;
+      var Track = obj.track;
+      var Volume = obj.volume;
+      //var Duration = obj.duration;
+      var Progress = obj.progress;
+      var Duration = (parseInt(((obj.duration +5)/10))*10);
+      //---- progress bar -------------------------
+      var elem  = document.getElementById("myProgressBar");
+      var width = (Progress / Duration) * 100;
+      //console.log("Progress ["+width+"%]");
+          document.getElementById('progress').innerHTML = " &nbsp; "+Progress+"s";
+          elem.style.width = width + "%";
+          document.getElementById('duration').innerHTML = ((Duration-Progress)*-1)+"s &nbsp; ";
+      //-------------------------------------------
+      var ipAddress = "["+obj.ipAddress+"]";
+      if (Shuffle == "ON")
+            document.getElementById('shuffle').innerHTML = "shuffle OFF";
+      else  document.getElementById('shuffle').innerHTML = "shuffle ON";
+      document.getElementById('playlist').innerHTML = Playlist.substring(0,40);
+      document.getElementById('artist').innerHTML = Artist.substring(0,40);
+      document.getElementById('album').innerHTML = Album.substring(0,40);
+      document.getElementById('track').innerHTML = Track;
+      document.getElementById('ipAddress').innerHTML = ipAddress;
+      document.getElementById('volume').value = Volume;
+      document.getElementById('playerVolume').innerHTML = "Volume: "+Volume+"%";
+    }
+    else if (obj.type == "devices")
+    {
+      const devices = obj.devices;
+
+      populateSelector("devices", devices);
+    }  
+
+  } //  onMessage()
+  
+  //----------------------------------------------------------------------------
+  function onLoad(event) 
+  {
+    initWebSocket();
+    initButton();
+
+  } //  onLoad()
+  
+  //----------------------------------------------------------------------------
+  function initButton() 
+  {
+    document.getElementById('pause').addEventListener('click', pause);
+    document.getElementById('play').addEventListener('click', play);
+    document.getElementById('previous').addEventListener('click', previous);
+    document.getElementById('shuffle').addEventListener('click', toggle);
+    document.getElementById('next').addEventListener('click', next);
+    document.getElementById('saveDevice').addEventListener('click', saveDevice);
+    document.getElementById('M_FSmanager').addEventListener('click', startFSmanager);
+    document.getElementById('M_Playlists').addEventListener('click', startPlaylists);
+    document.getElementById('M_Settings').addEventListener('click', startSettings);
+       
+    slider.oninput = function() 
+    {
+      //output.innerHTML = this.value;
+      //if ((this.value % 5) == 0)
+      {
+        var jsonSource = {};
+        var jsonData = {};
+        jsonSource["source"] = "indexGUI";
+        jsonSource["command"] = "volume";
+        jsonData["volume"] = this.value;
+        console.log("send("+JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData)+")");
+        websocket.send(JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData));
+        document.getElementById('playerVolume').innerHTML = "Volume: "+this.value+"%";
+
+      }
+    }
+
+    
+  } //  initButton()
+    
+  //----------------------------------------------------------------------------
+  function populateSelector(elementId, jsonArray)
+  {
+    var select = document.getElementById(elementId);
+
+    //-- clear dropdownlist --
+    document.getElementById(elementId).options.length = 0;
+    
+    for(var i = 0; i < jsonArray.length; i++) 
+    {
+      var device = jsonArray[i];
+      //console.log("["+i+"] name["+device.name+"] select["+device.active+"]");
+      var el = document.createElement("option");
+      el.text = device.name;
+      el.value = device.name;
+      if (device.active)
+      {
+        el.setAttribute("selected",true);
+        newDevice = device.name;
+      }
+      select.add(el);
+    }
+    
+  } //  populateSelector()
+  
+  //----------------------------------------------------------------------------
+  function deviceChange(newValue) 
+  {
+    console.log("device now is ["+newValue+"]");
+    newDevice = newValue;
+    
+  } //  deviceChange()
+
+  //----------------------------------------------------------------------------
+  function reload()
+  {
+    var jsonSource = {};
+    var jsonData = {};
+    jsonSource["source"] = "indexGUI";
+    jsonSource["command"] = "reload";
+    console.log("send("+JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData)+")");
+    websocket.send(JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData));
+    
+  } //  reload()
+  
+  //----------------------------------------------------------------------------
+  function playingInfo()
+  {
+    var jsonSource = {};
+    var jsonData = {};
+    jsonSource["source"] = "indexGUI";
+    jsonSource["command"] = "playingInfo";
+    console.log("send("+JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData)+")");
+    websocket.send(JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData));
+    
+  } //  playingInfo()
+
+  //----------------------------------------------------------------------------
+  function previous()
+  {
+    var jsonSource = {};
+    var jsonData = {};
+    jsonSource["source"] = "indexGUI";
+    jsonSource["command"] = "previous";
+    //console.log("send("+JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData)+")");
+    websocket.send(JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData));
+    
+  } //  previous()
+  
+  //----------------------------------------------------------------------------
+  function toggle()
+  {
+    var jsonSource = {};
+    var jsonData = {};
+    jsonSource["source"] = "indexGUI";
+    jsonSource["command"] = "toggle";
+    console.log("send("+JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData)+")");
+    websocket.send(JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData));
+    
+  } //  toggle()
+  
+  //----------------------------------------------------------------------------
+  function next()
+  {
+    var jsonSource = {};
+    var jsonData = {};
+    jsonSource["source"] = "indexGUI";
+    jsonSource["command"] = "next";
+    console.log("send("+JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData)+")");
+    websocket.send(JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData));
+    
+  } //  next()
+  
+  //----------------------------------------------------------------------------
+  function pause()
+  {
+    var jsonSource = {};
+    var jsonData = {};
+    jsonSource["source"] = "indexGUI";
+    jsonSource["command"] = "pause";
+    console.log("send("+JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData)+")");
+    websocket.send(JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData));
+    
+  } //  pause()
+  
+  //----------------------------------------------------------------------------
+  function play()
+  {
+    var jsonSource = {};
+    var jsonData = {};
+    jsonSource["source"] = "indexGUI";
+    jsonSource["command"] = "play";
+    console.log("send("+JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData)+")");
+    websocket.send(JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData));
+    
+  } //  play()
+   
+  //----------------------------------------------------------------------------
+  function saveDevice()
+  {
+    var jsonSource = {};
+    var jsonData = {};
+    jsonSource["source"] = "indexGUI";
+    jsonSource["command"] = "saveDevice";
+    jsonData["new_device"] = newDevice;
+    console.log("send("+JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData)+")");
+    websocket.send(JSON.stringify(jsonSource)+"###"+JSON.stringify(jsonData));
+    
+  } //  saveDevice()
+  
+  //----------------------------------------------------------------------------
+  function startFSmanager()
+  {
+    console.log("start FSmanger");
+    window.location.replace("/FSmanager");
+    
+  } //  startFSmanager()
+  
+  //----------------------------------------------------------------------------
+  function startPlaylists()
+  {
+    console.log("start Playlists");
+    window.location.replace("/playlists");
+    
+  } //  startPlaylists()
+  
+  //----------------------------------------------------------------------------
+  function startSettings()
+  {
+    console.log("start Settings");
+    window.location.replace("/settings");
+    
+  } //  startSettings()
+  
+</script>
+  
+    <!-- Pin to bottom right corner -->
+    <div class="bottom right-0">2021, 2022 &copy; Willem Aandewiel</div>
+
+    <!-- Pin to bottom left corner -->
+    <div id="ipAddress" class="bottom left-0">[ipAddress]</div>
+
+</body>
+</html>
