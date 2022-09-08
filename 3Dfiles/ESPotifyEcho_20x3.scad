@@ -44,11 +44,11 @@ myPcb = "./STL/ESPotifyEcho_v01_PCB.stl";
                           LEFT
 */
 
-printBaseShell      = true;
+printBaseShell      = false;
 printLidShell       = true;
-showStlHolder       = true;
-showStlPCB          = true;
-showStlCube         = true;
+showStlHolder       = false;
+showStlPCB          = false;
+showStlCube         = false;
 
 // Edit these parameters for your own board dimensions
 wallThickness       = 2.0;
@@ -194,7 +194,8 @@ pcbStands = [
 // (5) = { yappRectangle | yappCircle }
 // (6) = { yappCenter }
 cutoutsLid =    [
-                  [110, pcbWidth/2, 58, 57, 0, yappRectangle, yappCenter]  // cubeTray
+                  [110, pcbWidth/2, 58, 62, 0, yappRectangle, yappCenter]  // cubeTray
+
                  ,[9.2, -45,   54, 54, 0, yappRectangle]  // spare Left cubeTray
                  ,[9.2,  22.5, 54, 54, 0, yappRectangle]  // spare middle cubeTray
                  ,[9.2,  90,   54, 54, 0, yappRectangle]  // spare Right cubeTray

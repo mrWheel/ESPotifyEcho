@@ -1,8 +1,8 @@
 /*
 Tray for Music Cubes
 */
-printBody     = true;
-printLidLeft  = true;
+printBody     = false;
+printLidLeft  = false;
 printLidRight = true;
 printCube     = false;
 printRFIDpcb  = false;

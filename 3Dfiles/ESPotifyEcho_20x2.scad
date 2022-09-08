@@ -3,7 +3,7 @@
 //
 //  This is a box for de ESPotifyEcho controller
 //
-//  Version 1.1 (13-02-2022)
+//  Version 1.1 (06-09-2022)
 //
 // This design is parameterized based on the size of a PCB.
 //---------------------------------------------------------
@@ -47,10 +47,10 @@ myPcb = "./STL/ESPotifyEcho_v01_PCB.stl";
 
 printBaseShell      = false;
 printLidShell       = true;
-showStlHolder       = true;
+showStlHolder       = false;
 showStlPCB          = false;
 showStlCube         = false;
-showStlSpareBase    = true;
+showStlSpareBase    = false;
 
 // Edit these parameters for your own board dimensions
 wallThickness       = 2.0;

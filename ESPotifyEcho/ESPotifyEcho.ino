@@ -56,7 +56,7 @@
 #define _URISTORE_REC_LEN 400
 #define _PROX_BUTTONS       2
 
-//#define _PROD
+#define _PROD
 #ifdef _PROD
   #define _WHITE_LED       13
   #define _GREEN_LED       14
