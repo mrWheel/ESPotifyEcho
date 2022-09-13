@@ -1,68 +1,68 @@
 
 //------------------------------------------------------------------------------------
 //-- This function gets a call when a WebSocket event occurs
-void webSocketEvent(byte num, WStype_t type, uint8_t * payload, size_t length) 
+void webSocketEvent(byte num, WStype_t type, uint8_t *payload, size_t length)
 {
   //String  wsPayloadS = String((char *) &payload[0]);
   char   *wsPayload = (char *) &payload[0];
   char    thisSource[20] = {};
   char    thisCommand[20] = {};
 
-  switch (type) 
+  switch (type)
   {
     case WStype_DISCONNECTED: // enum that read status this is used for debugging.
-            //DebugTf("WS Type [%d] : DISCONNECTED\r\n", type);
-            break;
-            
+      //DebugTf("WS Type [%d] : DISCONNECTED\r\n", type);
+      break;
+
     case WStype_CONNECTED:  // Check if a WebSocket client is connected or not
-            //DebugTf("WS Type [%d] : CONNECTED\r\n", type);
-            break;
-            
+      //DebugTf("WS Type [%d] : CONNECTED\r\n", type);
+      break;
+
     case WStype_TEXT: // check responce from client
-            //Serial.printf("payload(char*) : [%s]\r\n", wsPayload);
-            // Deserialize the document
-            SpiRamJsonDocument source(500);
-            SpiRamJsonDocument data(20000);
-            DeserializationError err;
+      //Serial.printf("payload(char*) : [%s]\r\n", wsPayload);
+      // Deserialize the document
+      SpiRamJsonDocument source(500);
+      SpiRamJsonDocument data(20000);
+      DeserializationError err;
 
-            int skipPos = getIndex(wsPayload, "}###{", -1, 0 , 0);
-            err = deserializeJson(source, wsPayload);
-            if (checkDeserializationError(__FUNCTION__, source, err)) return;
-            snprintf(thisSource, sizeof(thisSource),   "%s", source["source"].as<const char*>() );
-            snprintf(thisCommand, sizeof(thisCommand), "%s", source["command"].as<const char*>() );
+      int skipPos = getIndex(wsPayload, "}###{", -1, 0, 0);
+      err = deserializeJson(source, wsPayload);
+      if (checkDeserializationError(__FUNCTION__, source, err)) return;
+      snprintf(thisSource, sizeof(thisSource),   "%s", source["source"].as<const char *>() );
+      snprintf(thisCommand, sizeof(thisCommand), "%s", source["command"].as<const char *>() );
 
-            //-- replace source[] part of message with spaces --
-            for(int i=0; i<(skipPos+4); i++)  wsPayload[i] = ' ';
-            err = deserializeJson(data, wsPayload);
-            if (checkDeserializationError(__FUNCTION__, data, err)) return;
+      //-- replace source[] part of message with spaces --
+      for(int i=0; i<(skipPos+4); i++)  wsPayload[i] = ' ';
+      err = deserializeJson(data, wsPayload);
+      if (checkDeserializationError(__FUNCTION__, data, err)) return;
 
-            if (strcasecmp(thisSource, "indexGUI") == 0)
-            {
-              handleGUImessage(thisCommand, data);
-            }
-            else if (strcasecmp(thisSource, "settingsGUI") == 0)
-            {
-              handleSettingsGUImessage(thisCommand, data);
-            }
-            else if (strcasecmp(thisSource, "playlistsGUI") == 0)
-            {
-              handlePlaylistsGUImessage(thisCommand, data);
-            }
-            break;
-            
+      if (strcasecmp(thisSource, "indexGUI") == 0)
+      {
+        handleGUImessage(thisCommand, data);
+      }
+      else if (strcasecmp(thisSource, "settingsGUI") == 0)
+      {
+        handleSettingsGUImessage(thisCommand, data);
+      }
+      else if (strcasecmp(thisSource, "playlistsGUI") == 0)
+      {
+        handlePlaylistsGUImessage(thisCommand, data);
+      }
+      break;
+
   } //  switch(type)
-  
+
 } //  webSocketEvent()
 
 
 //------------------------------------------------------------------------------
-void handleGUImessage(const char* command, const JsonDocument &data)
+void handleGUImessage(const char *command, const JsonDocument &data)
 {
   //DebugT(":");
   //serializeJsonPretty(data, Serial);
   //Debugln();
   //DebugFlush();
-  
+
   if (strncasecmp(command, "reload", sizeof(command)) == 0)
   {
     updateGuiPlayingInfo();
@@ -91,15 +91,15 @@ void handleGUImessage(const char* command, const JsonDocument &data)
     //-----------------------------------------------------------------------------
     //-- putting the next 12 lines of code in a wrapper function craches the ESP32
     //-----------------------------------------------------------------------------
-    
-    strlcpy(systemDevice.deviceName, data["new_device"].as<const char*>(), sizeof(systemDevice.deviceName));
+
+    strlcpy(systemDevice.deviceName, data["new_device"].as<const char *>(), sizeof(systemDevice.deviceName));
     actDeviceNum  = searchPlayerByName(systemDevice.deviceName);
     strlcpy(systemDevice.deviceId, aDevices[actDeviceNum].deviceId, sizeof(systemDevice.deviceId) );
     DebugTf("new systemDevice[%s] Id[%s]\r\n", systemDevice.deviceName, systemDevice.deviceId);
 
     saveDeviceFile(_DEVICE_FILE);
     //printFile(_DEVICE_FILE);
-  
+
     DebugTf("Change player from [%s] ", spotify.deviceName);
     strlcpy(spotify.deviceName, systemDevice.deviceName, sizeof(spotify.deviceName));
     Debugf("to [%s]\r\n", spotify.deviceName);
@@ -162,13 +162,13 @@ void updateGuiPlayingInfo()
   //                                          , (((playbackState->progress/1000) *100) / (playbackState->itemDuration/1000)));
 
   //-- serialize the object and save teh result to the string variable.
-  serializeJson(playing, jsonString); 
+  serializeJson(playing, jsonString);
   //-- print the string for debugging.
-  //Serial.println( jsonString ); 
+  //Serial.println( jsonString );
   //-- send the JSON object through the websocket
-  webSocket.broadcastTXT(jsonString); 
+  webSocket.broadcastTXT(jsonString);
   jsonString = ""; // clear the String.
-  
+
 } //  updateGuiPlayingInfo()
 
 
@@ -202,7 +202,7 @@ void updateGuiDevices()
       {
         devices["devices"][i]["active"] = true;
       }
-      else 
+      else
       {
         devices["devices"][i]["active"] = false;
       }
@@ -211,24 +211,24 @@ void updateGuiDevices()
   }
 
   //-- serialize the object and save teh result to teh string variable.
-  serializeJson(devices, jsonString); 
+  serializeJson(devices, jsonString);
   //-- print the string for debugging.
-  DebugTln( jsonString.c_str() ); 
+  DebugTln( jsonString.c_str() );
   //-- send the JSON object through the websocket
-  webSocket.broadcastTXT(jsonString); 
+  webSocket.broadcastTXT(jsonString);
   jsonString = ""; // clear the String.
-  
+
 } //  updateGuiDevices()
 
 
 
 //------------------------------------------------------------------------------
-void handleSettingsGUImessage(const char* command, const JsonDocument &data)
+void handleSettingsGUImessage(const char *command, const JsonDocument &data)
 {
   bool hasChanged = false;
   //serializeJsonPretty(data, Serial);
   //Serial.println();
-  
+
   if (strcasecmp(command, "reload") == 0)
   {
     //DebugT("Got a \"reload\" message! ");
@@ -249,48 +249,48 @@ void handleSettingsGUImessage(const char* command, const JsonDocument &data)
   else if (strcasecmp(command, "save") == 0)
   {
     DebugTln("Got a \"save\" message! ");
-    if (strcmp(data["new_wifiSSID"].as<const char*>(), settings->wifiSSID) != 0)
+    if (strcmp(data["new_wifiSSID"].as<const char *>(), settings->wifiSSID) != 0)
     {
-      snprintf(settings->wifiSSID, sizeof(settings->wifiSSID),"%s"
-                                 , data["new_wifiSSID"].as<const char*>() );
+      snprintf(settings->wifiSSID, sizeof(settings->wifiSSID), "%s"
+               , data["new_wifiSSID"].as<const char *>() );
       hasChanged = true;
     }
 
-    if (strcmp(data["new_wifiPassword"].as<const char*>(), settings->wifiPassword) != 0)
+    if (strcmp(data["new_wifiPassword"].as<const char *>(), settings->wifiPassword) != 0)
     {
-      snprintf(settings->wifiPassword, sizeof(settings->wifiPassword),"%s"
-                                     , data["new_wifiPassword"].as<const char*>() );
+      snprintf(settings->wifiPassword, sizeof(settings->wifiPassword), "%s"
+               , data["new_wifiPassword"].as<const char *>() );
       hasChanged = true;
     }
 
-    if (strcmp(data["new_hostName"].as<const char*>(), settings->hostName) != 0)
+    if (strcmp(data["new_hostName"].as<const char *>(), settings->hostName) != 0)
     {
-      snprintf(settings->hostName, sizeof(settings->hostName),"%s"
-                                     , data["new_hostName"].as<const char*>() );
+      snprintf(settings->hostName, sizeof(settings->hostName), "%s"
+               , data["new_hostName"].as<const char *>() );
       hasChanged = true;
     }
 
-    if (strcmp(data["new_spotifyClientId"].as<const char*>(), settings->spotifyClientId) != 0)
+    if (strcmp(data["new_spotifyClientId"].as<const char *>(), settings->spotifyClientId) != 0)
     {
-      snprintf(settings->spotifyClientId, sizeof(settings->spotifyClientId),"%s"
-                                        , data["new_spotifyClientId"].as<const char*>() );
+      snprintf(settings->spotifyClientId, sizeof(settings->spotifyClientId), "%s"
+               , data["new_spotifyClientId"].as<const char *>() );
       hasChanged = true;
     }
 
-    if (strcmp(data["new_spotifyClientSecret"].as<const char*>(), settings->spotifyClientSecret) != 0)
+    if (strcmp(data["new_spotifyClientSecret"].as<const char *>(), settings->spotifyClientSecret) != 0)
     {
-      snprintf(settings->spotifyClientSecret, sizeof(settings->spotifyClientSecret),"%s"
-                                        , data["new_spotifyClientSecret"].as<const char*>() );
+      snprintf(settings->spotifyClientSecret, sizeof(settings->spotifyClientSecret), "%s"
+               , data["new_spotifyClientSecret"].as<const char *>() );
       hasChanged = true;
     }
 
-    if (strcmp(data["new_spotifyRefreshToken"].as<const char*>(), settings->spotifyRefreshToken) != 0)
+    if (strcmp(data["new_spotifyRefreshToken"].as<const char *>(), settings->spotifyRefreshToken) != 0)
     {
-      snprintf(settings->spotifyRefreshToken, sizeof(settings->spotifyRefreshToken),"%s"
-                                        , data["new_spotifyRefreshToken"].as<const char*>() );
+      snprintf(settings->spotifyRefreshToken, sizeof(settings->spotifyRefreshToken), "%s"
+               , data["new_spotifyRefreshToken"].as<const char *>() );
       hasChanged = true;
     }
-  
+
     if (hasChanged)
     {
       DebugTln("Something has changed! Save it!");
@@ -300,7 +300,7 @@ void handleSettingsGUImessage(const char* command, const JsonDocument &data)
     {
       DebugTln("Nothing has changed!");
     }
-  
+
   } // --save--
 
   DebugTln("Now update settingsGUI!");
@@ -317,7 +317,7 @@ void updateSettingsGUI()
 
   // create an object
   JsonObject object = doc.to<JsonObject>();
-  
+
   object["wifiSSID"] = settings->wifiSSID;
   object["wifiPassword"] = settings->wifiPassword;
   object["hostName"] = settings->hostName;
@@ -344,47 +344,50 @@ void updateSettingsGUI()
   }
 
   //-- serialize the object and save the result to the string variable.
-  serializeJson(doc, jsonString); 
+  serializeJson(doc, jsonString);
 
   //DebugTf("broadcastTXT(%s)\r\n", jsonString.c_str());
   //DebugFlush();
-  
+
   //-- send the JSON object through the websocket
-  webSocket.broadcastTXT(jsonString); 
+  webSocket.broadcastTXT(jsonString);
   jsonString = ""; // clear the String.
-  
+
 } //  updateSettingsGUI()
 
 
 //------------------------------------------------------------------------------
-void handlePlaylistsGUImessage(const char* command, const JsonDocument &data)
+void handlePlaylistsGUImessage(const char *command, const JsonDocument &data)
 {
   bool hasChanged = false;
   DebugTf("Command [%s] => Data:\r\n", command);
   serializeJsonPretty(data, Serial);
   Serial.println();
-  
+
   if (strcasecmp(command, "reload") == 0)
   {
-    inUriStore = populateUriStore();  
+    inUriStore = populateUriStore();
   }
   else if (strcasecmp(command, "save") == 0)
   {
     DebugTln("Got a \"save\" message! ");
-    saveUriStoreFile(_URI_STORE_FILE);  
+    saveUriStoreFile(_URI_STORE_FILE);
   } // --save--
   else if (strcasecmp(command, "readNfcTag") == 0)
   {
     DebugTln("Got a \"readNfcTag\" message! ");
     DebugTf("NFC tag on cube [%s]\r\n", actNfcTag);
     int nfcTagNr = searchPlaylistByNfcTag(actNfcTag);
-    
+
     if (nfcTagNr >= 0)
-          sendNewRFID("place new RFID");
+    {
+      //uriStore[nfcTagNr].playlistUri
+      sendNewRFID(uriStore[nfcTagNr].playlistName);
+    }
     else  sendNewRFID(actNfcTag);
-    
+
     return;
-    
+
   } // --readRFID--
   else if (strcasecmp(command, "newLink") == 0)
   {
@@ -398,14 +401,14 @@ void handlePlaylistsGUImessage(const char* command, const JsonDocument &data)
     {
       strlcpy(uriStore[plstNr].nfcTag, tmpNfcTag, sizeof(uriStore[plstNr].nfcTag));
       DebugTf("Linked RFID[%s] to [%s]\r\n", uriStore[plstNr].nfcTag
-                                           , uriStore[plstNr].playlistName);
+              , uriStore[plstNr].playlistName);
     }
     else
     {
       DebugTf("Error! RFID[%s] already linked to [%s]\r\n", tmpNfcTag
-                                                          , uriStore[nfcTagNr].playlistName);;
+              , uriStore[nfcTagNr].playlistName);;
     }
-    
+
   } // --newLink--
   else if (strcasecmp(command, "unlink") == 0)
   {
@@ -415,10 +418,10 @@ void handlePlaylistsGUImessage(const char* command, const JsonDocument &data)
     {
       snprintf(uriStore[unlinkNr].nfcTag,  sizeof(uriStore[unlinkNr].nfcTag), "-");
       DebugTf("playlist [%s] now has nfcTag[%s]\r\n", uriStore[unlinkNr].playlistName
-                                                    , uriStore[unlinkNr].nfcTag);
+              , uriStore[unlinkNr].nfcTag);
     }
   } // --unlink--
-  
+
   DebugTln("Now update playlistsGUI!");
   DebugFlush();
   updatePlaylistsGUI();
@@ -427,24 +430,24 @@ void handlePlaylistsGUImessage(const char* command, const JsonDocument &data)
 
 
 //------------------------------------------------------------------------------
-void sendNewRFID(const char* newRFID)
+void sendNewRFID(const char *newRFID)
 {
   SpiRamJsonDocument doc(5000);
 
   // create an object
   JsonObject object = doc.to<JsonObject>();
-  
+
   doc["type"]  = "newRFID";
   doc["newRFID"] = newRFID;
-  
+
   //-- serialize the object and save teh result to teh string variable.
-  serializeJson(doc, jsonString); 
+  serializeJson(doc, jsonString);
 
   DebugTf("broadcastTXT(%s)\r\n", jsonString.c_str());
   DebugFlush();
-  
+
   //-- send the JSON object through the websocket
-  webSocket.broadcastTXT(jsonString); 
+  webSocket.broadcastTXT(jsonString);
   jsonString = ""; // clear the String.
 
 } //  sendNewRFID()
@@ -464,7 +467,7 @@ void updatePlaylistsGUI()
   linkedObj["ipAddress"]    = WiFi.localIP().toString();
   notLinkedObj["type"]      = "notLinked";
   notLinkedObj["ipAddress"] = WiFi.localIP().toString();
-  
+
   //inUriStore = populateUriStore();
 
   int linkedNr = 0;
@@ -489,24 +492,24 @@ void updatePlaylistsGUI()
   }
 
   //-- serialize the object and save teh result to teh string variable.
-  serializeJson(linkedDoc, jsonString); 
+  serializeJson(linkedDoc, jsonString);
 
   DebugTf("broadcastTXT(%s)\r\n", jsonString.c_str());
   DebugFlush();
-  
+
   //-- send the JSON object through the websocket
-  webSocket.broadcastTXT(jsonString); 
+  webSocket.broadcastTXT(jsonString);
   jsonString = ""; // clear the String.
-  
-  serializeJson(notLinkedDoc, jsonString); 
+
+  serializeJson(notLinkedDoc, jsonString);
 
   DebugTf("broadcastTXT(%s)\r\n", jsonString.c_str());
   DebugFlush();
-  
+
   //-- send the JSON object through the websocket
-  webSocket.broadcastTXT(jsonString); 
+  webSocket.broadcastTXT(jsonString);
   jsonString = ""; // clear the String.
-  
+
 } //  updatePlaylistsGUI()
 
 

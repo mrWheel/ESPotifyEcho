@@ -31,10 +31,11 @@
 
 char cBuff[100] = {};
 
-struct _catStruct {
-    char fDir[35];
-    char fName[35];
-    int fSize;
+struct _catStruct
+{
+  char fDir[35];
+  char fName[35];
+  int fSize;
 } catStruct;
 
 const char WARNING[] PROGMEM = R"(<h2>Check! Sketch is compiled with "FS:none"!)";
@@ -84,7 +85,7 @@ const char noUpdateServer[] PROGMEM =
 
 //===========================================================================================
 //-- Funktionsaufruf "setupFS();" muss im Setup eingebunden werden
-void setupFSmanager() 
+void setupFSmanager()
 {
   httpServer.serveStatic("/FSmanager", LittleFS, "/FSmanager.html");
   httpServer.on("/format", formatFS);
@@ -101,7 +102,7 @@ void setupFSmanager()
   //httpUpdater.setSuccessPage(UpdateServerSuccess);
 #endif
 
-  httpServer.onNotFound([]() 
+  httpServer.onNotFound([]()
   {
 #ifndef _USE_UPDATE_SERVER
     if (httpServer.uri()=="/update")
@@ -110,36 +111,36 @@ void setupFSmanager()
     }
 #endif
     if (!handleFile(httpServer.urlDecode(httpServer.uri())))
-        httpServer.send(404, "text/plain", "FileNotFound");
+      httpServer.send(404, "text/plain", "FileNotFound");
   });
 
-} //  setupFSmanager() 
+} //  setupFSmanager()
 
 
 //===========================================================================================
 //-- Senden aller Daten an den Client
-bool handleList() 
+bool handleList()
 {
   _catStruct catalog[_MAX_LITTLEFS_FILES];
   char thisDir[35];
   int catPos = 0;
 
   memset(catalog, 0, sizeof(catalog));
-  
+
   File root = LittleFS.open("/");
 
   File dir  = root.openNextFile();
   while (dir && (catPos < (_MAX_LITTLEFS_FILES-2)) )
-  { 
-    yield();  
+  {
+    yield();
     if (dir.isDirectory()) // Ordner und Dateien zur Liste hinzufügen
     {
       //DebugTf("Found Directory [%s]\r\n", dir.name());
       uint8_t ran {0};
       snprintf(thisDir, sizeof(thisDir), "/%s/", dir.name());
       File fold = LittleFS.open(thisDir);
-      fold.openNextFile();  
-      while (fold && (catPos < (_MAX_LITTLEFS_FILES-2)) )  
+      fold.openNextFile();
+      while (fold && (catPos < (_MAX_LITTLEFS_FILES-2)) )
       {
         yield();
         //DebugTf("[%s] Found file [%s]\r\n", thisDir, fold.name());
@@ -149,7 +150,7 @@ bool handleList()
         snprintf(catalog[catPos].fName, sizeof(catalog[0].fName), "%s", fold.name());
         catalog[catPos].fSize = fold.size();
         catPos++;
-        fold = dir.openNextFile();  
+        fold = dir.openNextFile();
       }
       if (catPos > (_MAX_LITTLEFS_FILES-3) )
       {
@@ -171,7 +172,7 @@ bool handleList()
         catPos++;
       }
     }
-    else 
+    else
     {
       //DebugTf("Found file [%s]\r\n", dir.name());
       snprintf(catalog[catPos].fDir, sizeof(catalog[0].fDir), "");
@@ -185,12 +186,12 @@ bool handleList()
   qsort(catalog, catPos, sizeof(catalog[0]), sortFunction);
 
   String temp = "[";
-  for (int i=0; i<catPos; i++) 
+  for (int i=0; i<catPos; i++)
   {
     if (temp != "[") temp += "\n,";
     temp += "{\"folder\":\"" + String(catalog[i].fDir)
-             + "\",\"name\":\"" + String(catalog[i].fName)
-             + "\",\"size\":\"" + formatBytes(catalog[i].fSize) + "\"}";
+            + "\",\"name\":\"" + String(catalog[i].fName)
+            + "\",\"size\":\"" + formatBytes(catalog[i].fSize) + "\"}";
   }
   temp += ",{\"usedBytes\":\"" + formatBytes(LittleFS.usedBytes()) +                      // Berechnet den verwendeten Speicherplatz
           "\",\"totalBytes\":\"" + formatBytes(LittleFS.totalBytes()) +                   // Zeigt die Größe des Speichers
@@ -198,12 +199,12 @@ bool handleList()
 
   httpServer.send(200, "application/json", temp);
   return true;
-  
-} //  handleList() 
+
+} //  handleList()
 
 
 //===========================================================================================
-void deleteRecursive(const char *path) 
+void deleteRecursive(const char *path)
 {
   char mName[33] = {};
   char fName[33] = {};
@@ -228,7 +229,7 @@ void deleteRecursive(const char *path)
       snprintf(cBuff, sizeof(cBuff), "%s/%s", mName, file.name());
       file.close();
       deleteRecursive(cBuff);
-      file  = map.openNextFile(); 
+      file  = map.openNextFile();
     }
     if (LittleFS.rmdir(mName))
           DebugTf("OK! [%s] removed\r\n", mName);
@@ -254,13 +255,13 @@ void deleteRecursive(const char *path)
 
 
 //===========================================================================================
-bool handleFile(String &&path) 
+bool handleFile(String &&path)
 {
 
-  if (httpServer.hasArg("new")) 
+  if (httpServer.hasArg("new"))
   {
     char folderName[50] = {};
-    
+
     snprintf(folderName, sizeof(folderName), "/%s", httpServer.arg("new").c_str());
     DebugTf("New folderName [%s]\r\n", folderName);
     if (LittleFS.mkdir(folderName))
@@ -286,13 +287,13 @@ bool handleFile(String &&path)
     }
   } //  create folder
   if (httpServer.hasArg("sort")) return handleList();
-  if (httpServer.hasArg("delete")) 
+  if (httpServer.hasArg("delete"))
   {
     deleteRecursive(httpServer.arg("delete").c_str());
     sendResponce();
     return true;
   }
-  if (!LittleFS.exists("/FSmanager.html")) 
+  if (!LittleFS.exists("/FSmanager.html"))
   {
     httpServer.send(200, "text/html", LittleFS.begin() ? HELPER : WARNING);     // ermöglicht das hochladen der FSmanager.html
   }
@@ -305,19 +306,21 @@ bool handleFile(String &&path)
 
 
 //===========================================================================================
-void handleUpload() 
-{ // Dateien ins Filesystem schreiben
+void handleUpload()
+{
+  // Dateien ins Filesystem schreiben
   static File fsUploadFile;
-  
-  HTTPUpload& upload = httpServer.upload();
-  if (upload.status == UPLOAD_FILE_START) 
+
+  HTTPUpload &upload = httpServer.upload();
+  if (upload.status == UPLOAD_FILE_START)
   {
-    if (upload.filename.length() > 31) 
-    {  // Dateinamen kürzen
+    if (upload.filename.length() > 31)
+    {
+      // Dateinamen kürzen
       upload.filename = upload.filename.substring(upload.filename.length() - 31, upload.filename.length());
     }
     printf(PSTR("handleFileUpload Name: /%s/%s\r\n"), httpServer.arg(0), upload.filename.c_str());
-    if (httpServer.arg(0) == "/") //-- root!    
+    if (httpServer.arg(0) == "/") //-- root!
           fsUploadFile = LittleFS.open("/" + httpServer.urlDecode(upload.filename), "w");
     else  fsUploadFile = LittleFS.open("/" + httpServer.arg(0) + "/" + httpServer.urlDecode(upload.filename), "w");
     if (!fsUploadFile)
@@ -325,18 +328,18 @@ void handleUpload()
       DebugTf("Failed to open [%s] in [%s]\r\n", upload.filename, httpServer.arg(0));
       return;
     }
-  } 
-  else if (upload.status == UPLOAD_FILE_WRITE) 
+  }
+  else if (upload.status == UPLOAD_FILE_WRITE)
   {
     printf(PSTR("handleFileUpload Data: %u\r\n"), upload.currentSize);
     fsUploadFile.write(upload.buf, upload.currentSize);
-  } 
-  else if (upload.status == UPLOAD_FILE_END) 
+  }
+  else if (upload.status == UPLOAD_FILE_END)
   {
     printf(PSTR("handleFileUpload Size: %u\r\n"), upload.totalSize);
     fsUploadFile.close();
   }
-  
+
 } //  handleUpload()
 
 
@@ -346,31 +349,32 @@ void formatFS()      // Formatiert das Filesystem
   DebugTln("formatting LittleFS ..");
   LittleFS.format();
   sendResponce();
-  
+
 } //  formatFS()
 
 
 //===========================================================================================
-void listFS() 
+void listFS()
 {
   DebugTln("send LittleFS data ..");
   sendResponce();
-  
+
 } //  listFS()
 
 
 //===========================================================================================
-void sendResponce() 
+void sendResponce()
 {
   httpServer.sendHeader("Location", "/FSmanager.html");
   httpServer.send(303, "message/http");
-  
+
 } //  sendResponse()
 
 
 //===========================================================================================
-const String formatBytes(size_t const& bytes) 
-{ // lesbare Anzeige der Speichergrößen
+const String formatBytes(size_t const &bytes)
+{
+  // lesbare Anzeige der Speichergrößen
   return bytes < 1024 ? static_cast<String>(bytes) + " Byte" : bytes < 1048576 ? static_cast<String>(bytes / 1024.0) + " KB" : static_cast<String>(bytes / 1048576.0) + " MB";
 
 } //  formatBytes()
@@ -384,7 +388,7 @@ void updateFirmware()
   //doRedirect("wait ... ", 5, "/updateIndex ", false);
   httpServer.send(200, "text/html", noUpdateServer);
 #endif
-      
+
 } // updateFirmware()
 **/
 
@@ -393,57 +397,57 @@ void reBootESP()
 {
   DebugTln("Redirect and ReBoot ..");
   doRedirect("Reboot ESP32 ..", 30, "/", true);
-      
+
 } // reBootESP()
 
 //=====================================================================================
-void doRedirect(String msg, int wait, const char* URL, bool reboot)
+void doRedirect(String msg, int wait, const char *URL, bool reboot)
 {
-  String redirectHTML = 
-  "<!DOCTYPE HTML><html lang='en-US'>"
-  "<head>"
-  "<meta charset='UTF-8'>"
-  "<style type='text/css'>"
-  "body {background-color: lightblue;}"
-  "</style>"
-  "<title>Redirect to Main Program</title>"
-  "</head>"
-  "<body><h1>"+String(_HOSTNAME)+"</h1>"
-  "<h3>"+msg+"</h3>";
+  String redirectHTML =
+    "<!DOCTYPE HTML><html lang='en-US'>"
+    "<head>"
+    "<meta charset='UTF-8'>"
+    "<style type='text/css'>"
+    "body {background-color: lightblue;}"
+    "</style>"
+    "<title>Redirect to Main Program</title>"
+    "</head>"
+    "<body><h1>"+String(_HOSTNAME)+"</h1>"
+    "<h3>"+msg+"</h3>";
   if (String(URL).indexOf("/updateIndex") == 0)
   {
     redirectHTML += "<br>If this does not work just type \"<b>http://"+String(_HOSTNAME)+".local/update\"";
     redirectHTML += "</b>as URL!<br>";
   }
   redirectHTML += "<br><div style='width: 500px; position: relative; font-size: 25px;'>"
-  "  <div style='float: left;'>Redirect over &nbsp;</div>"
-  "  <div style='float: left;' id='counter'>"+String(wait)+"</div>"
-  "  <div style='float: left;'>&nbsp; seconden ...</div>"
-  "  <div style='float: right;'>&nbsp;</div>"
-  "</div>"
-  "<!-- Note: don't tell people to `click` the link, just tell them that it is a link. -->"
-  "<br><br><hr>If you are not redirected automatically, click this <a href='/'>Main Program</a>."
-  "  <script>"
-  "      setInterval(function() {"
-  "          var div = document.querySelector('#counter');"
-  "          var count = div.textContent * 1 - 1;"
-  "          div.textContent = count;"
-  "          if (count <= 0) {"
-  "              window.location.replace('"+String(URL)+"'); "
-  "          } "
-  "      }, 1000); "
-  "  </script> "
-  "</body></html>\r\n";
-  
+                  "  <div style='float: left;'>Redirect over &nbsp;</div>"
+                  "  <div style='float: left;' id='counter'>"+String(wait)+"</div>"
+                  "  <div style='float: left;'>&nbsp; seconden ...</div>"
+                  "  <div style='float: right;'>&nbsp;</div>"
+                  "</div>"
+                  "<!-- Note: don't tell people to `click` the link, just tell them that it is a link. -->"
+                  "<br><br><hr>If you are not redirected automatically, click this <a href='/'>Main Program</a>."
+                  "  <script>"
+                  "      setInterval(function() {"
+                  "          var div = document.querySelector('#counter');"
+                  "          var count = div.textContent * 1 - 1;"
+                  "          div.textContent = count;"
+                  "          if (count <= 0) {"
+                  "              window.location.replace('"+String(URL)+"'); "
+                  "          } "
+                  "      }, 1000); "
+                  "  </script> "
+                  "</body></html>\r\n";
+
   DebugTln(msg);
   httpServer.send(200, "text/html", redirectHTML);
-  if (reboot) 
+  if (reboot)
   {
     delay(5000);
     ESP.restart();
     delay(5000);
   }
-  
+
 } // doRedirect()
 
 

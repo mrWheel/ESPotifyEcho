@@ -9,40 +9,40 @@ bool showNowPlaying(bool force)
     if (parsePlaybackState(spotify.getPlaybackState(), false) )
     {
       DebugTf( "\r\n\n      Player: [%-22.22s] %-7.7s  Volume[%6d%%]\r\n"
-                                                    , playbackState->deviceName
-                                                    , playbackState->shuffle ? "shuffle":" "
-                                                    , playbackState->deviceVolume);
+               , playbackState->deviceName
+               , playbackState->shuffle ? "shuffle":" "
+               , playbackState->deviceVolume);
       Debugf("context Name: [%s]\r\n", playbackState->contextName);
       Debugf(" context URI: [%s]\r\n", playbackState->contextUri);
       Debugf("      Artist: [%s]\r\n", playbackState->artistName);
       Debugf("       Album: [%s]\r\n", playbackState->albumName);
       Debugf("     playing: [%-30.30s] [%4ds of %4ds]\r\n"
-                                                    , playbackState->itemName
-                                                    , (playbackState->progress/1000)
-                                                    , (playbackState->itemDuration/1000));
+             , playbackState->itemName
+             , (playbackState->progress/1000)
+             , (playbackState->itemDuration/1000));
       Debugf("   track URI: [%s]\r\n", playbackState->itemUri);
       Debugln();
-        
+
       updateGuiPlayingInfo();
-        
+
     }
     else
     {
       DebugTf( "\r\n     Player: [%s] Volume[%d%%]\r\n", systemDevice.deviceName
-                                                       , systemDevice.deviceVolume);
+               , systemDevice.deviceVolume);
       Debugf("NOT playing: [%s] ?!?!\r\n", playbackState->contextName);
       Debugf("           : [%s] ?!?!\r\n", playbackState->contextUri);
       return false;
     }
   } //  force or time ..
-  
+
   return true;
-  
+
 } //  showNowPlaying()
 
 
 //------------------------------------------------------------
-void addUriToStore(const char *artist, const char* album, const char *uri)
+void addUriToStore(const char *artist, const char *album, const char *uri)
 {
   DebugTf("adding [%s] @%d\r\n", artist, inUriStore);
   snprintf(uriStore[inUriStore].nfcTag, sizeof(uriStore[inUriStore].nfcTag), "-");
@@ -52,7 +52,7 @@ void addUriToStore(const char *artist, const char* album, const char *uri)
   uriStore[inUriStore].tracks = 1;
   inUriStore++;
   //DebugTf("now in store [%d]\r\n", inUriStore);
-  
+
 } //  addUriToStore()
 
 
@@ -74,12 +74,12 @@ int populateUriStore()
   inUriStore = parseMyPlaylists(spotify.getPlaylists(""));
 
   DebugTf("Added [%d] records, total [%d] records in uriStore\r\n", (inUriStore-saveInStore)
-                                                                  ,  inUriStore);
+          ,  inUriStore);
 
   //listUriStore();
-  
+
   return inUriStore;
-  
+
 } //  polpulateUriStore()
 
 
@@ -103,7 +103,7 @@ int searchPlaylistByName(const char *pName)
   }
 
   return -1;
-  
+
 } //  searchPlaylistByName()
 
 
@@ -128,7 +128,7 @@ int searchPlaylistByUri(const char *pName)
   }
 
   return -1;
-  
+
 } //  searchPlaylistByUri()
 
 
@@ -138,7 +138,7 @@ int searchPlaylistByNfcTag(const char *pName)
   for (int i=0; i<inUriStore; i++)
   {
     if (strlen(uriStore[i].nfcTag) < 20)  return -1;
-    
+
     //DebugTf("[%d]check [%s]==[%s]?",i, uriStore[i].nfcTag, pName);
     if (strncasecmp(uriStore[i].nfcTag, pName, strlen(uriStore[i].nfcTag)) == 0)
     {
@@ -150,7 +150,7 @@ int searchPlaylistByNfcTag(const char *pName)
   }
 
   return -1;
-  
+
 } //  searchPlaylistByNfcTag()
 
 
@@ -169,7 +169,7 @@ int searchPlayerByName(const char *pName)
   }
 
   return -1;
-  
+
 } //  searchPlayerByName()
 
 
@@ -179,10 +179,10 @@ void listUriStore()
   for(int i=0; i<inUriStore; i++)
   {
     Debugf("[%3d] - %03d %-30.30s (%4d) [%s]\r\n", (i+1)
-                                                 , uriStore[i].recNr
-                                                 , uriStore[i].playlistName
-                                                 , uriStore[i].tracks
-                                                 , uriStore[i].nfcTag);
+           , uriStore[i].recNr
+           , uriStore[i].playlistName
+           , uriStore[i].tracks
+           , uriStore[i].nfcTag);
   }
 
 } //  listUriStore()
@@ -225,69 +225,77 @@ bool eepromWrite()
 //-------------------------------------------------------
 //    str[] - The string to search in.
 //    search[] - The substring to search for.
-//    
+//
 //    Returns -1 if substring not found.
-int getIndex(const char* str, const char* search, int index, int i,int j)
+int getIndex(const char *str, const char *search, int index, int i, int j)
 {
-    //-- Substring found.
-    if( search[j] == '\0' )
-        return index;
-    //-- Search string ended but substring not found.
-    if( str[i] == '\0' )
-        return -1;
+  //-- Substring found.
+  if( search[j] == '\0' )
+    return index;
+  //-- Search string ended but substring not found.
+  if( str[i] == '\0' )
+    return -1;
 
-    if( str[i] == search[j] )
-    {
-      //-- Sets index equal to the index of first charector of search in str 
-      if( j == 0 ) index = i;
-      j++;
-    }
-    else 
-    {
-      // Sets index back to -1 due to missmatched charector.
-      index = -1;
-      j = 0;
-    }
-     //-- Continue search.
-    return getIndex(str, search, index, ++i, j);
-    
+  if( str[i] == search[j] )
+  {
+    //-- Sets index equal to the index of first charector of search in str
+    if( j == 0 ) index = i;
+    j++;
+  }
+  else
+  {
+    // Sets index back to -1 due to missmatched charector.
+    index = -1;
+    j = 0;
+  }
+  //-- Continue search.
+  return getIndex(str, search, index, ++i, j);
+
 } //  getIndex()
 
 
 //----------------------------------------------------------
 String urlencode(String str)
 {
-    String encodedString="";
-    char c;
-    char code0;
-    char code1;
-    char code2;
-    for (int i =0; i < str.length(); i++){
-      c=str.charAt(i);
-      if (c == ' '){
-        encodedString+= '+';
-      } else if (isalnum(c)){
-        encodedString+=c;
-      } else{
-        code1=(c & 0xf)+'0';
-        if ((c & 0xf) >9){
-            code1=(c & 0xf) - 10 + 'A';
-        }
-        c=(c>>4)&0xf;
-        code0=c+'0';
-        if (c > 9){
-            code0=c - 10 + 'A';
-        }
-        code2='\0';
-        encodedString+='%';
-        encodedString+=code0;
-        encodedString+=code1;
-        //encodedString+=code2;
-      }
-      yield();
+  String encodedString="";
+  char c;
+  char code0;
+  char code1;
+  char code2;
+  for (int i =0; i < str.length(); i++)
+  {
+    c=str.charAt(i);
+    if (c == ' ')
+    {
+      encodedString+= '+';
     }
-    return encodedString;
-    
+    else if (isalnum(c))
+    {
+      encodedString+=c;
+    }
+    else
+    {
+      code1=(c & 0xf)+'0';
+      if ((c & 0xf) >9)
+      {
+        code1=(c & 0xf) - 10 + 'A';
+      }
+      c=(c>>4)&0xf;
+      code0=c+'0';
+      if (c > 9)
+      {
+        code0=c - 10 + 'A';
+      }
+      code2='\0';
+      encodedString+='%';
+      encodedString+=code0;
+      encodedString+=code1;
+      //encodedString+=code2;
+    }
+    yield();
+  }
+  return encodedString;
+
 } //  urlencode()
 
 
@@ -295,17 +303,17 @@ String urlencode(String str)
 void blinkAllLeds(int num)
 {
   int led[] = {_SHUFFLE_LED, _GREEN_LED, _B0_LED, _WHITE_LED, _B1_LED, _ERROR_LED };
-  int16_t waitTime = 150;
+  int16_t waitTime = 500;
   int numberOfLeds = sizeof(led) / sizeof(led[0]);
-  
+
   DebugTf("Start blinking (%d leds)\r\n", numberOfLeds);
   //-- switch off all the leds
-  for(int l=0; l<numberOfLeds; l++)  
+  for(int l=0; l<numberOfLeds; l++)
   {
     digitalWrite(led[l],   LOW);
   }
 
-  //-- loop number of blinks 
+  //-- loop number of blinks
   for (int b=0; b<num; b++)
   {
     if (waitTime < 50) waitTime = 50;
@@ -319,13 +327,13 @@ void blinkAllLeds(int num)
       }
       delay(waitTime);
     }
-    waitTime -= 20;
+    waitTime -= 100;
   }
   //-- switch off all the leds again
   for(int l=0; l<numberOfLeds; l++)  digitalWrite(led[l],   LOW);
   digitalWrite(_GREEN_LED, HIGH);
   Debugln();
-  
+
 } //  blinkAllLeds()
 
 
@@ -343,5 +351,5 @@ void pulseWhiteLeds()
     if (brightness < 10)  changeStep = +4;
     analogWrite(_WHITE_LED, brightness);
   }
-  
+
 } //  pulseWhiteLeds()

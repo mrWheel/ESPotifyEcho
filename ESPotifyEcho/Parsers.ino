@@ -4,7 +4,7 @@
 void parseUserId(String payload)
 {
   DebugTln("parseUserId() ..");
-  
+
   SpiRamJsonDocument filter(500);
   filter["email"] = true;
   filter["id"]    = true;
@@ -23,7 +23,7 @@ void parseUserId(String payload)
   //serializeJsonPretty(doc, Serial);
   //Debugln();
   //DebugTln("==================================");
-  strlcpy(spotify.userId, doc["id"].as<const char*>(), sizeof(spotify.userId));
+  strlcpy(spotify.userId, doc["id"].as<const char *>(), sizeof(spotify.userId));
   DebugTf("User Id [%s]\r\n", spotify.userId);
 
 } //  parseUserId()
@@ -35,7 +35,7 @@ bool parseDevices(String payload)
   //DebugTln("parseDevices() ..");
   memset(aDevices, 0, sizeof(aDevices));
   numDevices = 0;
-  
+
   SpiRamJsonDocument filter(500);
   filter["devices"][0]["id"] = true;
   filter["devices"][0]["is_active"] = true;
@@ -58,23 +58,23 @@ bool parseDevices(String payload)
   //DebugTln("==================================");
 
   JsonArray devices = doc["devices"];
-  
+
   //DebugTf("Found [%d] devices\r\n", devices.size());
   //DebugFlush();
-  
+
   int i=0;
-  for (JsonObject device : devices) 
+  for (JsonObject device : devices)
   {
-    snprintf(aDevices[i].deviceId,   sizeof(aDevices[i].deviceId),   "%s", device["id"].as<const char*>() );
-    snprintf(aDevices[i].deviceName, sizeof(aDevices[i].deviceName), "%s", device["name"].as<const char*>() );
+    snprintf(aDevices[i].deviceId,   sizeof(aDevices[i].deviceId),   "%s", device["id"].as<const char *>() );
+    snprintf(aDevices[i].deviceName, sizeof(aDevices[i].deviceName), "%s", device["name"].as<const char *>() );
     aDevices[i].deviceVolume = device["volume_percent"].as<int>();
     if (device["is_active"].as<bool>()) actDeviceNum = i;
-/*
-    Serial.printf("[%2d] [%-20.20s] [%2d%%] [%s]\r\n", i
-                                              , aDevices[i].deviceName
-                                              , aDevices[i].deviceVolume
-                                              , aDevices[i].deviceId);
-*/
+    /*
+        Serial.printf("[%2d] [%-20.20s] [%2d%%] [%s]\r\n", i
+                                                  , aDevices[i].deviceName
+                                                  , aDevices[i].deviceVolume
+                                                  , aDevices[i].deviceId);
+    */
     i++;
     if (i>_MAX_DEVICES) break;
   }
@@ -90,12 +90,12 @@ bool parseDevices(String payload)
     for(int i=0; i<numDevices; i++)
     {
       Serial.printf("[%2d] [%-20.20s] [%2d%%] [%s]\r\n", i
-                                              , aDevices[i].deviceName
-                                              , aDevices[i].deviceVolume
-                                              , aDevices[i].deviceId);
+                    , aDevices[i].deviceName
+                    , aDevices[i].deviceVolume
+                    , aDevices[i].deviceId);
     }
   }
-  
+
   return true;
 
 } //  parseDevices()
@@ -106,7 +106,7 @@ int parseMyPlaylists(String payload)
 {
   char tmpName[_ALBUM_NAME_LEN];
   int n, i = inUriStore;
-  
+
   DebugTln("parseMyPlaylists() ..");
 
   if (inUriStore > _MAX_URISTORE)
@@ -114,7 +114,7 @@ int parseMyPlaylists(String payload)
     DebugTf("uriStore is full (%d playlists). Bailout\r\n", inUriStore);
     return inUriStore;
   }
-  
+
   SpiRamJsonDocument filter(1000);
   filter["items"][0]["name"] = true;
   filter["items"][0]["type"] = true;
@@ -126,7 +126,7 @@ int parseMyPlaylists(String payload)
 
   // Deserialize the document
   SpiRamJsonDocument doc(10000);
-  
+
   DeserializationError err = deserializeJson(doc, payload, DeserializationOption::Filter(filter));
   //DeserializationError err = deserializeJson(doc, payload);
   if (checkDeserializationError(__FUNCTION__, doc, err)) return false;
@@ -135,13 +135,13 @@ int parseMyPlaylists(String payload)
   //serializeJsonPretty(doc, Serial);
   //Debugln();
   //DebugTln("==================================");
-  
+
   JsonArray playlists = doc["items"];
-  
+
   DebugTf("Found [%d] playlists\r\n", playlists.size());
   DebugFlush();
-  
-  for (JsonObject playlist : playlists) 
+
+  for (JsonObject playlist : playlists)
   {
     strlcpy(tmpName, playlist["name"], sizeof(tmpName));
     //DebugTf("playlistName [%s] ..", tmpName);
@@ -150,10 +150,10 @@ int parseMyPlaylists(String payload)
     if (n < 0)
     {
       snprintf(uriStore[i].nfcTag,  sizeof(uriStore[i].nfcTag), "-");
-      snprintf(uriStore[i].artist,  sizeof(uriStore[i].artist), "%s", playlist["name"].as<const char*>() );
-      snprintf(uriStore[i].album,   sizeof(uriStore[i].album),  "%s", playlist["name"].as<const char*>() );
-      snprintf(uriStore[i].playlistName,sizeof(uriStore[i].playlistName), "%s", playlist["name"].as<const char*>() );
-      snprintf(uriStore[i].playlistUri, sizeof(uriStore[i].playlistUri),  "%s", playlist["uri"].as<const char*>() );
+      snprintf(uriStore[i].artist,  sizeof(uriStore[i].artist), "%s", playlist["name"].as<const char *>() );
+      snprintf(uriStore[i].album,   sizeof(uriStore[i].album),  "%s", playlist["name"].as<const char *>() );
+      snprintf(uriStore[i].playlistName, sizeof(uriStore[i].playlistName), "%s", playlist["name"].as<const char *>() );
+      snprintf(uriStore[i].playlistUri, sizeof(uriStore[i].playlistUri),  "%s", playlist["uri"].as<const char *>() );
       uriStore[i].tracks = playlist["tracks"]["total"].as<int>();
       //Debugf("Add: [%2d] [%-20.20s] ([%d] tracks) [%s]\r\n", (i+1)
       //                                        , uriStore[i].playlistName
@@ -164,7 +164,7 @@ int parseMyPlaylists(String payload)
     }
     else //-- already in Store, so update URI & number of tracks!
     {
-      snprintf(uriStore[n].playlistUri, sizeof(uriStore[n].playlistUri), "%s", playlist["uri"].as<const char*>() );
+      snprintf(uriStore[n].playlistUri, sizeof(uriStore[n].playlistUri), "%s", playlist["uri"].as<const char *>() );
       uriStore[n].tracks = playlist["tracks"]["total"].as<int>();
     }
   }
@@ -193,7 +193,7 @@ bool parsePlaylists(String payload, const char *query, char *playlistId, int pid
 
   // Deserialize the document
   SpiRamJsonDocument doc(10000);
-  
+
   DeserializationError err = deserializeJson(doc, payload, DeserializationOption::Filter(filter));
   //DeserializationError err = deserializeJson(doc, payload);
   if(checkDeserializationError(__FUNCTION__, doc, err)) return false;
@@ -202,41 +202,41 @@ bool parsePlaylists(String payload, const char *query, char *playlistId, int pid
   serializeJsonPretty(doc, Serial);
   Debugln();
   DebugTln("==================================");
-  
+
   JsonArray playlists = doc["items"];
   DebugTf("Found [%d] playlists\r\n", playlists.size());
   DebugFlush();
-  
+
   int i=0;
-  for (JsonObject playlist : playlists) 
+  for (JsonObject playlist : playlists)
   {
-    if (strcmp(query, playlist["name"].as<const char*>()) == 0)
+    if (strcmp(query, playlist["name"].as<const char *>()) == 0)
     {
-      Serial.printf("Found: [%-20.20s] -> id[%s]\r\n", playlist["name"].as<const char*>()
-                                                     , playlist["id"].as<const char*>());
-      snprintf(playlistId, pidLen, playlist["id"].as<const char*>());
+      Serial.printf("Found: [%-20.20s] -> id[%s]\r\n", playlist["name"].as<const char *>()
+                    , playlist["id"].as<const char *>());
+      snprintf(playlistId, pidLen, playlist["id"].as<const char *>());
       break;
     }
   }
-  if (strlen(playlistId) < 1) 
+  if (strlen(playlistId) < 1)
   {
-        DebugTf("Error: no playlist [%s] found!\r\n", query);
-        return false;
+    DebugTf("Error: no playlist [%s] found!\r\n", query);
+    return false;
   }
   DebugTf("Ok, found playlistId for [%s] -> [%s]\r\n", query, playlistId);
   return true;
-  
+
 } //  parsePlaylists()
 
 
 //----------------------------------------------------------------
-int parsePlaylistItems(String payload, const char*playlistId)
+int parsePlaylistItems(String payload, const char *playlistId)
 {
   char trackUri[50] = {};
   int  totalTracks = 0;
   char tracksToRemove[600] = {};
   char startBracket[3] = "{";
-  
+
   Debugf("parsePlaylistItems(%s) ..", playlistId);
 
   SpiRamJsonDocument filter(500);
@@ -250,7 +250,7 @@ int parsePlaylistItems(String payload, const char*playlistId)
 
   // Deserialize the document
   SpiRamJsonDocument doc(10000);
-  
+
   DeserializationError err = deserializeJson(doc, payload, DeserializationOption::Filter(filter));
   //DeserializationError err = deserializeJson(doc, payload);
   if(checkDeserializationError(__FUNCTION__, doc, err)) return false;
@@ -259,16 +259,16 @@ int parsePlaylistItems(String payload, const char*playlistId)
   //serializeJsonPretty(doc, Serial);
   //Debugln();
   //DebugTln("==================================");
-  
+
   JsonArray tracks = doc["items"];
 
   DebugTf("Found [%d] tracks\r\n", tracks.size());
   DebugFlush();
-  
+
   strlcat(tracksToRemove, "{\"tracks\":[", sizeof(tracksToRemove));
-  for (JsonObject track : tracks) 
+  for (JsonObject track : tracks)
   {
-    snprintf(trackUri, sizeof(trackUri), "%s", track["track"]["uri"].as<const char*>());
+    snprintf(trackUri, sizeof(trackUri), "%s", track["track"]["uri"].as<const char *>());
     //Serial.printf("Found: [%2d] [%-20.20s] -> uri[%s]\r\n"
     //                                            , track["track"]["track_number"].as<int>()
     //                                            , track["track"]["name"].as<const char*>()
@@ -283,11 +283,11 @@ int parsePlaylistItems(String payload, const char*playlistId)
   //DebugTln("==delete uri's===============");
   //Debugln(tracksToRemove);
   spotify.deletePlaylistItems(playlistId, tracksToRemove);
-  
+
   totalTracks = doc["total"].as<int>();
 
   return totalTracks;
-  
+
 } //  parsePlaylistItems()
 
 
@@ -295,9 +295,9 @@ int parsePlaylistItems(String payload, const char*playlistId)
 bool parsePlaybackState(String payload, bool doVerbose)
 {
   //Serial.println("parsePlaybackState() ..");
-  
+
   SpiRamJsonDocument filter(2000);
-  
+
   filter["device"]["id"] = true;
   filter["device"]["name"] = true;
   filter["device"]["type"] = true;
@@ -320,10 +320,10 @@ bool parsePlaybackState(String payload, bool doVerbose)
 
   // Deserialize the document
   SpiRamJsonDocument doc(30000);
-  
+
   DeserializationError err = deserializeJson(doc, payload, DeserializationOption::Filter(filter));
-  
-  if (checkDeserializationError(__FUNCTION__, doc, err)) 
+
+  if (checkDeserializationError(__FUNCTION__, doc, err))
   {
     DebugTln("some error found! return;");
     return false;
@@ -332,20 +332,20 @@ bool parsePlaybackState(String payload, bool doVerbose)
   //serializeJsonPretty(doc, Serial);
   //Debugln();
   //DebugTln("==================================");
-  
-  strlcpy(playbackState->deviceId,    doc["device"]["id"].as<const char*>(),   sizeof(playbackState->deviceId));
-  strlcpy(playbackState->deviceName,  doc["device"]["name"].as<const char*>(), sizeof(playbackState->deviceName));
-  strlcpy(playbackState->deviceType,  doc["device"]["type"].as<const char*>(), sizeof(playbackState->deviceType));
-  strlcpy(playbackState->repeat,doc["repeat_state"].as<const char*>(),   sizeof(playbackState->repeat));
-  strlcpy(playbackState->contextUri,  doc["context"]["uri"].as<const char*>(), sizeof(playbackState->contextUri));
-  strlcpy(playbackState->contextType, doc["context"]["type"].as<const char*>(),sizeof(playbackState->contextType));
-  strlcpy(playbackState->itemUri,     doc["item"]["uri"].as<const char*>(),    sizeof(playbackState->itemUri));
-  strlcpy(playbackState->itemType,    doc["item"]["type"].as<const char*>(),   sizeof(playbackState->itemType));
-  strlcpy(playbackState->albumName,   doc["item"]["album"]["name"].as<const char*>()
-                                                                              ,sizeof(playbackState->albumName));
-  strlcpy(playbackState->itemName,    doc["item"]["name"].as<const char*>(),   sizeof(playbackState->itemName));
-  strlcpy(playbackState->artistName,  doc["item"]["album"]["artists"][0]["name"].as<const char*>()
-                                                                           ,   sizeof(playbackState->artistName));
+
+  strlcpy(playbackState->deviceId,    doc["device"]["id"].as<const char *>(),   sizeof(playbackState->deviceId));
+  strlcpy(playbackState->deviceName,  doc["device"]["name"].as<const char *>(), sizeof(playbackState->deviceName));
+  strlcpy(playbackState->deviceType,  doc["device"]["type"].as<const char *>(), sizeof(playbackState->deviceType));
+  strlcpy(playbackState->repeat, doc["repeat_state"].as<const char *>(),   sizeof(playbackState->repeat));
+  strlcpy(playbackState->contextUri,  doc["context"]["uri"].as<const char *>(), sizeof(playbackState->contextUri));
+  strlcpy(playbackState->contextType, doc["context"]["type"].as<const char *>(), sizeof(playbackState->contextType));
+  strlcpy(playbackState->itemUri,     doc["item"]["uri"].as<const char *>(),    sizeof(playbackState->itemUri));
+  strlcpy(playbackState->itemType,    doc["item"]["type"].as<const char *>(),   sizeof(playbackState->itemType));
+  strlcpy(playbackState->albumName,   doc["item"]["album"]["name"].as<const char *>()
+          , sizeof(playbackState->albumName));
+  strlcpy(playbackState->itemName,    doc["item"]["name"].as<const char *>(),   sizeof(playbackState->itemName));
+  strlcpy(playbackState->artistName,  doc["item"]["album"]["artists"][0]["name"].as<const char *>()
+          ,   sizeof(playbackState->artistName));
   strlcpy(playbackState->nfcTag,      actNfcTag,   sizeof(playbackState->nfcTag));
 
   playbackState->deviceVolume = (doc["device"]["volume_percent"].as<int>()) + 1;
@@ -360,8 +360,8 @@ bool parsePlaybackState(String payload, bool doVerbose)
   if (strlen(actNfcTag) == 20)
         actMusic = searchPlaylistByNfcTag(actNfcTag);
   else  actMusic = searchPlaylistByUri(playbackState->contextUri);
-  
-  if (actMusic >= 0) 
+
+  if (actMusic >= 0)
         strlcpy(playbackState->contextName, uriStore[actMusic].playlistName,   sizeof(playbackState->contextName));
   else  memset(playbackState->contextName, 0, sizeof(playbackState->contextName));
 
@@ -374,7 +374,7 @@ bool parsePlaybackState(String payload, bool doVerbose)
     DebugTf("    device Id: [%s]\r\n",  playbackState->deviceId);
     DebugTf("  device Name: [%s]\r\n",  playbackState->deviceName);
     DebugTf("         Type: [%s]\r\n",  playbackState->deviceType);
-    DebugTf("       Volume: [%d%%]\r\n",playbackState->deviceVolume);
+    DebugTf("       Volume: [%d%%]\r\n", playbackState->deviceVolume);
     DebugTf("      Shuffle: [%s]\r\n",  playbackState->shuffle ?"true":"false");
     DebugTf("       Repeat: [%s]\r\n",  playbackState->repeat);
     DebugTf("    Track Nr.: [%d]\r\n",  playbackState->trackNr);
@@ -393,7 +393,7 @@ bool parsePlaybackState(String payload, bool doVerbose)
     DebugTf("   check Prgs: [%d]\r\n",  playbackState->checkProgress);
     Debugln();
   }
-  
+
   RESET_TIMER(checkPlaybackStateTimer);
 
   return true;
@@ -404,7 +404,7 @@ bool parsePlaybackState(String payload, bool doVerbose)
 
 //----------------------------------------------------------------
 bool checkDeserializationError(const char *inFunct, const JsonDocument &doc
-                                                  , DeserializationError error)
+                               , DeserializationError error)
 {
   if (error)
   {
@@ -414,7 +414,8 @@ bool checkDeserializationError(const char *inFunct, const JsonDocument &doc
     Debugf("[%s] memoryUsage [%d]bytes\r\n", inFunct, doc.memoryUsage());
     Debugf("[%s] *****************************************\r\n", inFunct);
     Debugf("[%s] **  Error parsing payload [", inFunct);
-    Debug(error.f_str()); Debugln("]**");
+    Debug(error.f_str());
+    Debugln("]**");
     Debugf("[%s] *****************************************\r\n", inFunct);
     runLoopFunctions();
     return true;
@@ -425,7 +426,7 @@ bool checkDeserializationError(const char *inFunct, const JsonDocument &doc
     digitalWrite(_ERROR_LED, HIGH);
     digitalWrite(_GREEN_LED, LOW);
     RESET_TIMER(errorLedOff);
-    DebugTf("[%s] Error[%d] - [%s]\r\n", inFunct, doc["error"]["status"].as<int>(), doc["error"]["message"].as<const char*>());
+    DebugTf("[%s] Error[%d] - [%s]\r\n", inFunct, doc["error"]["status"].as<int>(), doc["error"]["message"].as<const char *>());
     if (doc["error"]["status"].as<int>() == 401)
     {
       // Refresh Spotify Auth token and Device ID
@@ -434,9 +435,9 @@ bool checkDeserializationError(const char *inFunct, const JsonDocument &doc
       DebugTf("httpCode is [%d]\r\n", httpCode);
       if (httpCode == 200)
       {
-          spotifyAccessOK = true;
+        spotifyAccessOK = true;
       }
-      else 
+      else
       {
         DebugTln("\r\n\n===================================================");
         DebugTln("Serious problem!!! Cannot obtain Refresh Token!!!");
@@ -446,13 +447,13 @@ bool checkDeserializationError(const char *inFunct, const JsonDocument &doc
     } //-- error == 401 ..
 
     runLoopFunctions();
-    
+
     return true;  //-- true := Yes, there is an error
-  
+
   } //-- there is an error
 
   //-- no error!
-  return false;  
+  return false;
 
 } //  checkDeserializationError()
 
@@ -483,7 +484,7 @@ void setShuffleMode(bool newMode)
   {
     digitalWrite(_SHUFFLE_LED, HIGH);
   }
-  else  
+  else
   {
     digitalWrite(_SHUFFLE_LED, LOW);
   }

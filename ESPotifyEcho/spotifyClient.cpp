@@ -366,7 +366,6 @@ String spotifyClient::getPlaylistItems(const char* playlistId)
 {
      HttpResult result = CallAPI( "GET", "https://api.spotify.com/v1/me/player/devices", "" );
      //if (DO_DEBUG) Serial.println(result.payload);
-     //deviceId = GetDeviceId(result.payload);
      if (DO_DEBUG) Serial.printf("Device ID: [%s]\r\n", this->deviceId);
 
      return result.payload;

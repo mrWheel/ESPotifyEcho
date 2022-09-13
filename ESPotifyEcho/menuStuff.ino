@@ -5,29 +5,43 @@ int activeStream  = 0;  // 1==Serial, 2=Telnet
 //----------------------------------------------------------------------
 void menuLoop()
 {
-  if (Serial.available())       
-          activeStream = 1;
-  else if (TelnetStream.available()) 
-          activeStream = 2;
-  else {activeStream = 0; return;}
-  
+  if (Serial.available())
+    activeStream = 1;
+  else if (TelnetStream.available())
+    activeStream = 2;
+  else
+  {
+    activeStream = 0;
+    return;
+  }
+
   do
   {
     switch(activeMenu)
     {
-      case 0:   activeMenu = topMenu();        
-                break;
-      case 1:   selectMusic();    break;
-      case 2:   selectDevice();   break;
-      case 3:   playerControl();  break;
-      case 4:   selectSystem();   break;
-      default:  activeMenu = topMenu();        
-                break;
+      case 0:
+        activeMenu = topMenu();
+        break;
+      case 1:
+        selectMusic();
+        break;
+      case 2:
+        selectDevice();
+        break;
+      case 3:
+        playerControl();
+        break;
+      case 4:
+        selectSystem();
+        break;
+      default:
+        activeMenu = topMenu();
+        break;
     } //  activeMenu
   } while(activeMenu >= 0);
   activeMenu = 0;
   if (spotifyAccessOK) showNowPlaying(true);
-  
+
 } //  menuLoop()
 
 
@@ -37,9 +51,15 @@ int topMenu()
   int keuze;
 
   //-- empty buffer's
-  while(Serial.available())       { Serial.read(); }
-  while(TelnetStream.available()) { TelnetStream.read(); }
-  
+  while(Serial.available())
+  {
+    Serial.read();
+  }
+  while(TelnetStream.available())
+  {
+    TelnetStream.read();
+  }
+
   do
   {
     keuze = -1;
@@ -49,18 +69,18 @@ int topMenu()
     Debugln("  3 - player Control");
     Debugln("  4 - System");
     Debugln("  q - Quit menu");
-    
+
     keuze = waitForInput(4);
-    if (keuze == 0) 
+    if (keuze == 0)
     {
       return -1;
     }
-      
+
   } while( (keuze < 0) && (keuze > 4) );
-  
+
   Debugf("\r\n\n[topMenu] You made your choice [%d]\r\n\n", keuze);
   return keuze;
-  
+
 } //  topMenu()
 
 
@@ -73,12 +93,12 @@ void selectArtist()
   char  urlArtist[100] = {};
   int totalTracks, offset = 0;
 
-  if (!spotifyAccessOK) 
+  if (!spotifyAccessOK)
   {
     activeMenu = -1;
     return;
   }
-  
+
   DebugTln("Delete playlist [ESPlaylist]");
   if (parsePlaylists(spotify.getPlaylists(), "ESPlaylist", deleteId, sizeof(deleteId)) )
   {
@@ -89,7 +109,7 @@ void selectArtist()
       offset += 10;
       offset += 50;
     } while (offset < totalTracks);
-    
+
     //if (spotify.deletePlaylistItems(deleteId)==200)
     //      DebugTf("Playlist [%s] is deleted\r\n", deleteId);
     //else  DebugTf("Error deleting playlist [%s]!\r\n", deleteId);
@@ -105,7 +125,7 @@ void rotateThisFile()
 {
   rotateFile(_URI_STORE_FILE, 5);
   activeMenu = 0;
-  
+
 } //  rotateThisFile()
 
 
@@ -118,7 +138,7 @@ void saveStore()
   DebugTf("There are [%d] records in uriStore\r\n", inUriStore);
 
   activeMenu = 0;
-  
+
 } //  saveStore()
 
 
@@ -128,25 +148,31 @@ void selectMusic()
   int keuze;
 
   //-- empty buffer's
-  while(Serial.available())       { Serial.read(); }
-  while(TelnetStream.available()) { TelnetStream.read(); }
-  
+  while(Serial.available())
+  {
+    Serial.read();
+  }
+  while(TelnetStream.available())
+  {
+    TelnetStream.read();
+  }
+
   do
   {
     keuze = -1;
     Debugln("\r\n[select Music] -------------------------------------------");
     if (spotifyAccessOK) listUriStore();
     Debugln("  q - Top menu");
-    
+
     keuze = waitForInput(inUriStore);
     if (keuze == 0)
     {
       activeMenu = 0;
       return;
     }
-      
+
   } while( (keuze < 0) && (keuze > inUriStore) );
-  
+
   Debugf("\r\n\n[selectMusic] You made your choice [%d]\r\n\n", keuze);
   if (!spotifyAccessOK)
   {
@@ -177,7 +203,7 @@ void selectMusic()
     spotify.shuffle(true);
     digitalWrite(_SHUFFLE_LED, HIGH);
   }
-  else  
+  else
   {
     spotify.shuffle(false);
     digitalWrite(_SHUFFLE_LED, LOW);
@@ -218,9 +244,15 @@ void selectDevice()
   }
 
   //-- empty buffer's
-  while(Serial.available())       { Serial.read(); }
-  while(TelnetStream.available()) { TelnetStream.read(); }
-  
+  while(Serial.available())
+  {
+    Serial.read();
+  }
+  while(TelnetStream.available())
+  {
+    TelnetStream.read();
+  }
+
   do
   {
     keuze = -1;
@@ -230,16 +262,16 @@ void selectDevice()
       Debugf("%3d - %-30.30s\r\n", (i+1), aDevices[i].deviceName);
     }
     Debugln("  q - Top menu");
-    
+
     keuze = waitForInput(numDevices);
     if (keuze == 0)
     {
       activeMenu = 0;
       return;
     }
-      
+
   } while( (keuze < 0) && (keuze > numDevices) );
-  
+
   Debugf("\r\n\n[selectDevice] You made your choice [%d]\r\n\n", keuze);
   activeMenu = 0;
 
@@ -248,7 +280,7 @@ void selectDevice()
   //-----------------------------------------------------------------------------
   //-- putting the next 12 lines of code in a wrapper function craches the ESP32
   //-----------------------------------------------------------------------------
-  
+
   strlcpy(systemDevice.deviceName, aDevices[actDeviceNum].deviceName, sizeof(systemDevice.deviceName));
   actDeviceNum  = searchPlayerByName(systemDevice.deviceName);
   strlcpy(systemDevice.deviceId, aDevices[actDeviceNum].deviceId, sizeof(systemDevice.deviceId) );
@@ -277,9 +309,15 @@ void playerControl()
   int volume;
 
   //-- empty buffer's
-  while(Serial.available())       { Serial.read(); }
-  while(TelnetStream.available()) { TelnetStream.read(); }
-  
+  while(Serial.available())
+  {
+    Serial.read();
+  }
+  while(TelnetStream.available())
+  {
+    TelnetStream.read();
+  }
+
   do
   {
     Debugln("\r\n[Player Control]--------------------");
@@ -299,7 +337,7 @@ void playerControl()
       parsePlaybackState(spotify.getPlaybackState(), false);
       return;
     }
-      
+
   } while( (keuze < 0) && (keuze > 8) );
 
   if (!spotifyAccessOK)
@@ -310,49 +348,57 @@ void playerControl()
 
   switch(keuze)
   {
-    case 1: Debugln("Next Track");
-            nextTrack();
-            break;
-    case 2: Debugln("Previous Track");
-            previousTrack();
-            break;
-    case 3: Debugln("Pause Player");
-            spotify.pause();
-            parsePlaybackState(spotify.getPlaybackState(), true);
-            showNowPlaying(true);
-            break;
-    case 4: Debugln("Play Player");
-            //spotify.setDeviceId(aDevices[actDeviceNum].deviceId);
-            spotify.currentUri = String(uriStore[actMusic].playlistUri);
-            spotify.play(playbackState->contextUri, playbackState->itemUri, playbackState->progress);
-            parsePlaybackState(spotify.getPlaybackState(), true);
-            break;
-    case 5: Debugln("Shuffle on");
-            //spotify.setDeviceId(aDevices[actDeviceNum].deviceId);
-            setShuffleMode(true);
-            //aDevices[actDeviceNum].deviceShuffle = true;
-            //digitalWrite(_SHUFFLE_LED, HIGH);
-            //showNowPlaying(true);
-            parsePlaybackState(spotify.getPlaybackState(), true);
-            break;
-    case 6: Debugln("Shuffle off");
-            //spotify.setDeviceId(aDevices[actDeviceNum].deviceId);
-            setShuffleMode(false);
-            //aDevices[actDeviceNum].deviceShuffle = false;
-            //digitalWrite(_SHUFFLE_LED, LOW);
-            //showNowPlaying(true);
-            parsePlaybackState(spotify.getPlaybackState(), true);
-            break;
-    case 7: {
-              setVolume((playbackState->deviceVolume -5));
-              Debugf("Volume Down [%d%%]\r\n", playbackState->deviceVolume);
-            }
-            break;
-    case 8: {
-              setVolume(playbackState->deviceVolume +5);
-              Debugf("Volume UP [%d%%]\r\n", playbackState->deviceVolume);
-            }
-            break;
+    case 1:
+      Debugln("Next Track");
+      nextTrack();
+      break;
+    case 2:
+      Debugln("Previous Track");
+      previousTrack();
+      break;
+    case 3:
+      Debugln("Pause Player");
+      spotify.pause();
+      parsePlaybackState(spotify.getPlaybackState(), true);
+      showNowPlaying(true);
+      break;
+    case 4:
+      Debugln("Play Player");
+      //spotify.setDeviceId(aDevices[actDeviceNum].deviceId);
+      spotify.currentUri = String(uriStore[actMusic].playlistUri);
+      spotify.play(playbackState->contextUri, playbackState->itemUri, playbackState->progress);
+      parsePlaybackState(spotify.getPlaybackState(), true);
+      break;
+    case 5:
+      Debugln("Shuffle on");
+      //spotify.setDeviceId(aDevices[actDeviceNum].deviceId);
+      setShuffleMode(true);
+      //aDevices[actDeviceNum].deviceShuffle = true;
+      //digitalWrite(_SHUFFLE_LED, HIGH);
+      //showNowPlaying(true);
+      parsePlaybackState(spotify.getPlaybackState(), true);
+      break;
+    case 6:
+      Debugln("Shuffle off");
+      //spotify.setDeviceId(aDevices[actDeviceNum].deviceId);
+      setShuffleMode(false);
+      //aDevices[actDeviceNum].deviceShuffle = false;
+      //digitalWrite(_SHUFFLE_LED, LOW);
+      //showNowPlaying(true);
+      parsePlaybackState(spotify.getPlaybackState(), true);
+      break;
+    case 7:
+    {
+      setVolume((playbackState->deviceVolume -5));
+      Debugf("Volume Down [%d%%]\r\n", playbackState->deviceVolume);
+    }
+    break;
+    case 8:
+    {
+      setVolume(playbackState->deviceVolume +5);
+      Debugf("Volume UP [%d%%]\r\n", playbackState->deviceVolume);
+    }
+    break;
   } // keuze
 
 } //  playerControl()
@@ -365,9 +411,15 @@ void selectSystem()
   int volume;
 
   //-- empty buffer's
-  while(Serial.available())       { Serial.read(); }
-  while(TelnetStream.available()) { TelnetStream.read(); }
-  
+  while(Serial.available())
+  {
+    Serial.read();
+  }
+  while(TelnetStream.available())
+  {
+    TelnetStream.read();
+  }
+
   do
   {
     Debugln("\r\n[System] -----------------------------------");
@@ -382,22 +434,26 @@ void selectSystem()
       activeMenu = 0;
       return;
     }
-      
+
   } while( (keuze < 0) && (keuze > 4) );
 
   switch(keuze)
   {
-    case 1: Debugln("Reboot ESPotify in 3 seconds");
-            delay(3000);
-            ESP.restart();
-            delay(5000);
-            break;
-    case 2: rotateThisFile();    
-            break;
-    case 3: saveStore();      
-            break;
-    case 4: Serial.println(spotify.getPlaybackState());
-            break;
+    case 1:
+      Debugln("Reboot ESPotify in 3 seconds");
+      delay(3000);
+      ESP.restart();
+      delay(5000);
+      break;
+    case 2:
+      rotateThisFile();
+      break;
+    case 3:
+      saveStore();
+      break;
+    case 4:
+      Serial.println(spotify.getPlaybackState());
+      break;
   } // keuze
 
 } //  selectSystem()
@@ -413,41 +469,48 @@ int waitForInput(int maxIn)
   {
     keuze = -1;
     memset(cKeuze, 0, sizeof(cKeuze));
-    
+
     Debug("\r\nEnter choice : ");
 
     switch(activeStream)
     {
-      case 1: Serial.setTimeout(20000);
-              len = Serial.readBytesUntil('\n', cKeuze, sizeof(cKeuze));
-              break;
-      case 2: TelnetStream.setTimeout(20000);
-              len = TelnetStream.readBytesUntil('\r', cKeuze, sizeof(cKeuze));
-              break;
+      case 1:
+        Serial.setTimeout(20000);
+        len = Serial.readBytesUntil('\n', cKeuze, sizeof(cKeuze));
+        break;
+      case 2:
+        TelnetStream.setTimeout(20000);
+        len = TelnetStream.readBytesUntil('\r', cKeuze, sizeof(cKeuze));
+        break;
     }
 
     //-- empty buffer's
-    while(Serial.available())       { Serial.read(); }
-    while(TelnetStream.available()) { TelnetStream.read(); }
-    
-    if (len <= 0) 
+    while(Serial.available())
+    {
+      Serial.read();
+    }
+    while(TelnetStream.available())
+    {
+      TelnetStream.read();
+    }
+
+    if (len <= 0)
     {
       Debugln("\r\nTimeout! Exit Menu\r\n");
       return 0;
     }
     if (activeStream == 1) Serial.println(cKeuze);
     else                   TelnetStream.println();
-    if (strcasecmp(cKeuze, "q") == 0) 
+    if (strcasecmp(cKeuze, "q") == 0)
     {
       Debugln("\r\nExit Menu\r\n");
       return 0;
     }
     keuze = atoi(cKeuze);
-  }
-  while( (keuze < 0) || (keuze > maxIn) );
-  
+  } while( (keuze < 0) || (keuze > maxIn) );
+
   return keuze;
-  
+
 } //  waitForInput()
 
 /*eof*/

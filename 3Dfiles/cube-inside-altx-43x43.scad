@@ -10,7 +10,7 @@
 *   Inside is about 42.5x42.5 (bottom) and 43.5x43.5 (top)
 */
 
-include <../YAPP_Box/library/roundedCubes.scad>
+include <{path-to-Your-YAPP_Box}/YAPP_Box/library/roundedCubes.scad>
 
 rib = 43;
 

@@ -7,7 +7,7 @@
 //
 // This design is parameterized based on the size of a PCB.
 //---------------------------------------------------------
-include </Users/WillemA/Documents/openSCAD/YAPP_Box/library/YAPPgenerator_v15.scad>
+include <{path-to-Your-YAPP_Box}/YAPP_Box/library/YAPPgenerator_v15.scad>
 
 musicCube = "./STL/cube_5x5.stl";
 tray      = "./STL/musicCubeTray.stl";
