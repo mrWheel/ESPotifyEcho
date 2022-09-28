@@ -2,7 +2,7 @@
 
 #define _PROX_BUTTONS               2
 #define _PROX_SHORT_RELEASE       500
-#define _PROX_VERY_LONG_RELEASE 15000  // restart
+#define _PROX_VERY_LONG_RELEASE 10000  // restart
 #define _PROX_DEBOUNCE             50
 
 // Keeps track of the last pins touched
@@ -79,6 +79,19 @@ void mpr121UpdateStates()
   // reset our state
   lasttouched = currtouched;
 
+  if ((proxState[_CAP_SW_UP] != PS_INIT) && (proxState[_CAP_SW_DOWN] != PS_INIT))
+  {
+    if (   ((millis() -proxPressStart[_CAP_SW_UP])    >= _PROX_VERY_LONG_RELEASE )
+        && ((millis() -proxPressStart[_CAP_SW_DOWN])  >= _PROX_VERY_LONG_RELEASE )
+       )
+    {
+      DebugTln("\r\n\nEnabled the Restart Sequence by user request ...\r\n\n");
+      DebugFlush();
+      ESP.restart();
+      delay(2000);
+    }
+  }
+
 } //  mpr121UpdateStates()
 
 
@@ -109,7 +122,7 @@ void mpr121Handle()
     } while( (proxState[_CAP_SW_DOWN] == PS_LONG_PRESS) && (proxState[_CAP_SW_UP] == PS_LONG_PRESS) );
     //if ( (proxState[0] == PS_VERY_LONG_PRESS) && (proxState[1] == PS_VERY_LONG_PRESS) )
     if (   ((millis() -proxPressStart[_CAP_SW_UP])    >= _PROX_VERY_LONG_RELEASE )
-           && ((millis() -proxPressStart[_CAP_SW_DOWN])  >= _PROX_VERY_LONG_RELEASE )
+        && ((millis() -proxPressStart[_CAP_SW_DOWN])  >= _PROX_VERY_LONG_RELEASE )
        )
     {
       DebugTln("Restart ESPotifyEcho ...");

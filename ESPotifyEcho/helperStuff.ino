@@ -32,6 +32,11 @@ bool showNowPlaying(bool force)
                , systemDevice.deviceVolume);
       Debugf("NOT playing: [%s] ?!?!\r\n", playbackState->contextName);
       Debugf("           : [%s] ?!?!\r\n", playbackState->contextUri);
+      //---- 14-09-2022 ------------
+      DebugTln("\r\n====================================================");
+      setSystemDevice();
+      DebugTln("====================================================\r\n");
+      //---- 14-09-2022 ------------
       return false;
     }
   } //  force or time ..

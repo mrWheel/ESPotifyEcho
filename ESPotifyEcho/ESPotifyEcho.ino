@@ -1,5 +1,5 @@
 /*
-  ESPotifyEcho    Rev. 1.0 (13-09-2022)
+  ESPotifyEcho    Rev. 1.0 (28-09-2022)
 
   This is code which I've created using “the evolutionary method”
   … which means “I don't know how it works” ;-)
@@ -65,7 +65,7 @@
 
 #define _PROX_BUTTONS                2
 
-#define _ALT_CAP_SWITCHES //-- normal is 0 & 1
+//#define _ALT_CAP_SWITCHES //-- normal is 0 & 1
 
 #ifdef _ALT_CAP_SWITCHES
   #define _CAP_SW_UP                10 //-- UP must be the lowest number
@@ -550,7 +550,7 @@ void setup()
   if (spotifyAccessOK) parsePlaybackState(spotify.getPlaybackState(), true);
 
   if (setSystemDevice())
-    DebugTln("Ok, seems correct device is already selected!");
+        DebugTln("Ok, seems correct device is already selected!");
   else  DebugTln("Hm.. changed device (just to be sure)!");
 
   actMusic = -1;

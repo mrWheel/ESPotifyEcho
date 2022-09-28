@@ -142,7 +142,7 @@ bool loadDeviceFile(const char *fileName)
 
   return true;
 
-} //  loadSettingsFile()
+} //  loadDeviceFile()
 
 
 //---------------------------------------------------------------------------
