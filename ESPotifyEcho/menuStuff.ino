@@ -38,6 +38,11 @@ void menuLoop()
         activeMenu = topMenu();
         break;
     } //  activeMenu
+
+    httpServer.handleClient();
+    webSocket.loop();
+    pulseWhiteLeds();
+
   } while(activeMenu >= 0);
   activeMenu = 0;
   if (spotifyAccessOK) showNowPlaying(true);
@@ -75,6 +80,10 @@ int topMenu()
     {
       return -1;
     }
+
+    httpServer.handleClient();
+    webSocket.loop();
+    pulseWhiteLeds();
 
   } while( (keuze < 0) && (keuze > 4) );
 
@@ -170,6 +179,10 @@ void selectMusic()
       activeMenu = 0;
       return;
     }
+
+    httpServer.handleClient();
+    webSocket.loop();
+    pulseWhiteLeds();
 
   } while( (keuze < 0) && (keuze > inUriStore) );
 
@@ -270,6 +283,10 @@ void selectDevice()
       return;
     }
 
+    httpServer.handleClient();
+    webSocket.loop();
+    pulseWhiteLeds();
+
   } while( (keuze < 0) && (keuze > numDevices) );
 
   Debugf("\r\n\n[selectDevice] You made your choice [%d]\r\n\n", keuze);
@@ -278,14 +295,14 @@ void selectDevice()
   actDeviceNum = keuze -1;
 
   //-----------------------------------------------------------------------------
-  //-- putting the next 12 lines of code in a wrapper function craches the ESP32
+  //-- putting the next 12 lines of code in a wrapper function crashes the ESP32
   //-----------------------------------------------------------------------------
 
   strlcpy(systemDevice.deviceName, aDevices[actDeviceNum].deviceName, sizeof(systemDevice.deviceName));
   actDeviceNum  = searchPlayerByName(systemDevice.deviceName);
   strlcpy(systemDevice.deviceId, aDevices[actDeviceNum].deviceId, sizeof(systemDevice.deviceId) );
   DebugTf("new systemDevice[%s] Id[%s]\r\n", systemDevice.deviceName, systemDevice.deviceId);
-
+  systemDevice.deviceState = true;
   saveDeviceFile(_DEVICE_FILE);
   //printFile(_DEVICE_FILE);
 
@@ -337,6 +354,10 @@ void playerControl()
       parsePlaybackState(spotify.getPlaybackState(), false);
       return;
     }
+
+    httpServer.handleClient();
+    webSocket.loop();
+    pulseWhiteLeds();
 
   } while( (keuze < 0) && (keuze > 8) );
 
@@ -435,6 +456,10 @@ void selectSystem()
       return;
     }
 
+    httpServer.handleClient();
+    webSocket.loop();
+    pulseWhiteLeds();
+
   } while( (keuze < 0) && (keuze > 4) );
 
   switch(keuze)
@@ -507,6 +532,11 @@ int waitForInput(int maxIn)
       return 0;
     }
     keuze = atoi(cKeuze);
+    
+    httpServer.handleClient();
+    webSocket.loop();
+    pulseWhiteLeds();
+
   } while( (keuze < 0) || (keuze > maxIn) );
 
   return keuze;

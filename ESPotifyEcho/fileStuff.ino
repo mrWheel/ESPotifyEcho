@@ -139,6 +139,7 @@ bool loadDeviceFile(const char *fileName)
   strlcpy(systemDevice.deviceId,   doc["deviceId"].as<const char *>(),   sizeof(systemDevice.deviceId));
   systemDevice.deviceVolume  = doc["deviceVolume"].as<int>();
   systemDevice.deviceShuffle = doc["deviceShuffle"].as<bool>();
+  systemDevice.deviceState   = doc["deviceState"].as<bool>();
 
   return true;
 
@@ -166,6 +167,7 @@ void saveDeviceFile(const char *fileName)
   doc["deviceId"]       = systemDevice.deviceId;
   doc["deviceVolume"]   = systemDevice.deviceVolume;
   doc["deviceShuffle"]  = systemDevice.deviceShuffle;
+  doc["deviceState"]    = systemDevice.deviceState;
 
   DebugTln("---------------------------------------------------");
   serializeJsonPretty(doc, Serial);

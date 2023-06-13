@@ -96,7 +96,7 @@ void handleGUImessage(const char *command, const JsonDocument &data)
     actDeviceNum  = searchPlayerByName(systemDevice.deviceName);
     strlcpy(systemDevice.deviceId, aDevices[actDeviceNum].deviceId, sizeof(systemDevice.deviceId) );
     DebugTf("new systemDevice[%s] Id[%s]\r\n", systemDevice.deviceName, systemDevice.deviceId);
-
+    systemDevice.deviceState = true;
     saveDeviceFile(_DEVICE_FILE);
     //printFile(_DEVICE_FILE);
 
@@ -239,8 +239,9 @@ void handleSettingsGUImessage(const char *command, const JsonDocument &data)
     uint32_t waitABit = millis();
     while ((millis() - waitABit) < 5000)
     {
-      httpServer.handleClient();
-      webSocket.loop();
+      runLoopFunctions();
+      //httpServer.handleClient();
+      //webSocket.loop();
     }
     DebugTln("ESP.restart() now!");
     ESP.restart();

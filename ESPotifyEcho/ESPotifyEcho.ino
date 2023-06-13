@@ -1,17 +1,17 @@
 /*
-  ESPotifyEcho    Rev. 1.0 (28-09-2022)
+  ESPotifyEcho    Rev. 1.0 (19-10-2022)
 
   This is code which I've created using “the evolutionary method”
   … which means “I don't know how it works” ;-)
 
   IDE settings:
-    - Board           : "ESP32 Dev Module" [ESP32-WROVER-E]
+    - Board           : "ESP32 Wrover Module" [ESP32-WROVER-E]
     - Flash Size      : "4MB (32Mb)"
     - Partition Scheme: "Default 4MB with spiffs (1.2MB APP/1.5MB SPIFFS)"
     - Core Debug Level: "None" ??
-    - PSRAM           : "Enabled"
-    - Arduino Runs On : "Core 1"
-    - Events Run On   : "Core 0"
+    // PSRAM           : "Enabled"
+    // Arduino Runs On : "Core 1"
+    // Events Run On   : "Core 0"
 
   Coding Style  ( http://astyle.sourceforge.net/astyle.html#_Quick_Start )
    - Allman style (-A1)
@@ -27,6 +27,11 @@
 
   remove <filename>.orig afterwards
 */
+
+//-- kantoor = "normal"       [ 0 &  1]
+//-- living  = "alternative"  [10 & 11]
+#define _ALT_CAP_SWITCHES //-- normal is 0 & 1 
+
 #define _USE_UPDATE_SERVER
 
 #define _HOSTNAME                 "ESPotify"
@@ -64,8 +69,6 @@
 #define _B1_LED                     27
 
 #define _PROX_BUTTONS                2
-
-//#define _ALT_CAP_SWITCHES //-- normal is 0 & 1
 
 #ifdef _ALT_CAP_SWITCHES
   #define _CAP_SW_UP                10 //-- UP must be the lowest number
@@ -174,6 +177,7 @@ struct deviceStruct
   char  deviceName[_DEVICE_ID_LEN];
   int   deviceVolume;
   bool  deviceShuffle;
+  bool  deviceState;
 };
 
 struct trackStruct
@@ -250,6 +254,7 @@ bool                mpr121Present = false;
 bool                ledState = 0;
 char                actNfcTag[_NFCTAG_LEN +1] = {0};
 String              jsonString;
+uint32_t            errorCount = 0;
 
 //---- prototypes --------------------------------------------
 //void convertToJson(const settingStruct &src, JsonVariant dst);
@@ -333,33 +338,6 @@ bool connectWifi(const char *ssid, const char *password)
 
 
 //------------------------------------------------------------
-void runLoopFunctions()
-{
-  menuLoop();
-
-  if (mpr121Present)
-  {
-    mpr121UpdateStates();
-    mpr121Handle();
-  }
-  httpServer.handleClient();
-  //-- webSocket server methode that handles all Client
-  webSocket.loop();
-
-
-  pulseWhiteLeds();
-
-  if (!spotifyAccessOK)
-  {
-    digitalWrite(_ERROR_LED, HIGH);
-    digitalWrite(_GREEN_LED, LOW);
-    return;
-  }
-
-} //  runLoopFunctions()
-
-
-//------------------------------------------------------------
 void setup()
 {
   Serial.begin(115200);
@@ -371,8 +349,8 @@ void setup()
   Serial.printf("\r\nTemporary Hostname [%s]\r\n", _HOSTNAME);
   Serial.flush();
 
-  pinMode(_WHITE_LED,  OUTPUT);
-  pinMode(_GREEN_LED,  OUTPUT);
+  pinMode(_WHITE_LED,   OUTPUT);
+  pinMode(_GREEN_LED,   OUTPUT);
   pinMode(_ERROR_LED,   OUTPUT);
   pinMode(_SHUFFLE_LED, OUTPUT);
   pinMode(_B0_LED,      OUTPUT);
@@ -429,10 +407,10 @@ void setup()
     delay(10);
   }
 
-  spotify.begin( settings->spotifyClientId
-                 , settings->spotifyClientSecret
-                 , settings->spotifyRefreshToken
-                 , systemDevice.deviceId);
+  spotify.begin(  settings->spotifyClientId
+                , settings->spotifyClientSecret
+                , settings->spotifyRefreshToken
+                , systemDevice.deviceId);
 
 
   if (ESP.getPsramSize() > 0)
@@ -503,7 +481,7 @@ void setup()
     if (!parseDevices(spotify.getDevices()) )
     {
       DebugTln("No devices found!");
-      digitalWrite(_ERROR_LED, HIGH);
+      setErrorLedOn();
       digitalWrite(_GREEN_LED, LOW);
     }
   }
@@ -524,9 +502,16 @@ void setup()
   if (spotifyAccessOK)
   {
     actDeviceNum = searchPlayerByName(systemDevice.deviceName);
-    DebugTf("     actDeviceNum [%d]\r\n", actDeviceNum);
-    DebugTf("systemDevice Name [%s]\r\n", systemDevice.deviceName);
-    DebugTf("  systemDevice Id [%s]\r\n", systemDevice.deviceId);
+    DebugTf("systemDevice State [%s]\r\n", systemDevice.deviceState?"OK":"Error");
+    if (!systemDevice.deviceState)
+    {
+        setSystemDevice();
+        systemDevice.deviceState = true;
+        saveDeviceFile(_DEVICE_FILE);
+    }
+    DebugTf("      actDeviceNum [%d]\r\n", actDeviceNum);
+    DebugTf(" systemDevice Name [%s]\r\n", systemDevice.deviceName);
+    DebugTf("   systemDevice Id [%s]\r\n", systemDevice.deviceId);
     strlcpy(spotify.deviceName, systemDevice.deviceName, sizeof(spotify.deviceName));
   }
 
@@ -614,6 +599,33 @@ void setup()
 
 
 //------------------------------------------------------------
+void runLoopFunctions()
+{
+  menuLoop();
+
+  if (mpr121Present)
+  {
+    mpr121UpdateStates();
+    mpr121Handle();
+  }
+  httpServer.handleClient();
+  //-- webSocket server methode that handles all Client
+  webSocket.loop();
+
+
+  pulseWhiteLeds();
+
+  if (!spotifyAccessOK)
+  {
+    setErrorLedOn();
+    digitalWrite(_GREEN_LED, LOW);
+    return;
+  }
+
+} //  runLoopFunctions()
+
+
+//------------------------------------------------------------
 void loop()
 {
   runLoopFunctions();
@@ -665,7 +677,17 @@ void loop()
   if (DUE(errorLedOff))
   {
     digitalWrite(_ERROR_LED, LOW);
+    errorCount = 0;
     digitalWrite(_GREEN_LED, HIGH);
+  }
+
+  if (errorCount > 10)
+  {
+    systemDevice.deviceState = false;
+    saveDeviceFile(_DEVICE_FILE);
+    delay(500);
+    ESP.restart();
+    delay(3000);
   }
 
   //-- in case some other device changed Shuffle mode

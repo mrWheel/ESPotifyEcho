@@ -408,7 +408,7 @@ bool checkDeserializationError(const char *inFunct, const JsonDocument &doc
 {
   if (error)
   {
-    digitalWrite(_ERROR_LED, HIGH);
+    setErrorLedOn();
     RESET_TIMER(errorLedOff);
     Debugf("[%s] *****************************************\r\n", inFunct);
     Debugf("[%s] memoryUsage [%d]bytes\r\n", inFunct, doc.memoryUsage());
@@ -423,7 +423,7 @@ bool checkDeserializationError(const char *inFunct, const JsonDocument &doc
 
   if (doc["error"]["status"].as<int>() != 0)
   {
-    digitalWrite(_ERROR_LED, HIGH);
+    setErrorLedOn();
     digitalWrite(_GREEN_LED, LOW);
     RESET_TIMER(errorLedOff);
     DebugTf("[%s] Error[%d] - [%s]\r\n", inFunct, doc["error"]["status"].as<int>(), doc["error"]["message"].as<const char *>());

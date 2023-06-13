@@ -358,3 +358,17 @@ void pulseWhiteLeds()
   }
 
 } //  pulseWhiteLeds()
+
+
+//------------------------------------------------------------
+void setErrorLedOn()
+{
+  digitalWrite(_ERROR_LED, HIGH);
+  if (millis() > (5*60*1000)) //-- langer dan 5 minuten geleden opgestart
+  {
+    errorCount++;
+  }
+  
+} //  setErrorLedOn()
+
+/*eof*/
